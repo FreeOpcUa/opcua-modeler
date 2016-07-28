@@ -1,0 +1,7 @@
+*.pyc
+.idea/encodings.xml
+.idea/opcua-modeler.iml
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/misc.xml
+.idea/modules.xml
