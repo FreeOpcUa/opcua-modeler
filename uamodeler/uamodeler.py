@@ -6,7 +6,7 @@ from enum import Enum
 
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QModelIndex, QMimeData
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QAbstractItemView, QMenu, QAction
+from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QAbstractItemView, QMenu, QAction, QFileDialog, QInputDialog
 
 from opcua import ua
 from opcua import Server
@@ -35,6 +35,8 @@ class UaModeler(QMainWindow):
         self.server = Server()
         self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
         self.server.set_server_name("OpcUa Modeler Server")
+
+        self._new_nodes = []  # the added nodes we will save
 
 
         self.tree_ui = TreeWidget(self.ui.treeView)
@@ -68,6 +70,8 @@ class UaModeler(QMainWindow):
         self.ui.actionAddObjectType.setIcon(QIcon(":/object_type.svg"))
         self.ui.actionAddProperty.setIcon(QIcon(":/property.svg"))
         self.ui.actionAddVariable.setIcon(QIcon(":/variable.svg"))
+        self.ui.actionAddVariableType.setIcon(QIcon(":/variable_type.svg"))
+
         # menu
         self.ui.treeView.addAction(self.ui.actionAddFolder)
         self.ui.treeView.addAction(self.ui.actionAddObject)
@@ -76,6 +80,32 @@ class UaModeler(QMainWindow):
         self.ui.treeView.addAction(self.ui.actionAddObjectType)
         self.ui.treeView.addAction(self.ui.actionAddVariableType)
         self.ui.treeView.addAction(self.ui.actionAddDataType)
+
+        # actions
+        self.ui.actionOpen.triggered.connect(self._open)
+        self.ui.actionSave.triggered.connect(self._save)
+        self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
+
+    def _open(self):
+        path = QFileDialog.getOpenFileName(self)
+        f = open(path[0], 'r')
+        xml = f.read()
+        print("should read", xml)
+
+    def _save(self):
+        raise NotImplementedError
+
+    def _add_object_type(self):
+        node = self.tree_ui.get_current_node()
+        if not node:
+            self.show_error("No node selected")
+        else:
+            i, ok = QInputDialog.getText(self, "New node type", "int, name")
+            nodeid, bname = i.split(",")
+            print(i, ok)
+            new_node = node.add_object_type(int(nodeid), bname)
+            self._new_nodes.append(new_node)
+            self.tree_ui.reload_current()
 
     def show_refs(self, idx):
         node = self.get_current_node(idx)
