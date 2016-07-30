@@ -85,6 +85,10 @@ class UaModeler(QMainWindow):
         self.ui.actionOpen.triggered.connect(self._open)
         self.ui.actionSave.triggered.connect(self._save)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
+        self.ui.actionAddObject.triggered.connect(self._add_object)
+        self.ui.actionAddDataType.triggered.connect(self._add_data_type)
+        self.ui.actionAddVariable.triggered.connect(self._add_variable)
+        self.ui.actionAddProperty.triggered.connect(self._add_property)
 
     def _open(self):
         path = QFileDialog.getOpenFileName(self)
@@ -95,24 +99,41 @@ class UaModeler(QMainWindow):
     def _save(self):
         raise NotImplementedError
 
-    def _add_object_type(self):
+    def _add_node(self, func_name, val=None):
         node = self.tree_ui.get_current_node()
         if not node:
             self.show_error("No node selected")
+            raise RuntimeError("No node selected")
+        i, ok = QInputDialog.getText(self, func_name, "int, name")
+        nodeid, bname = i.split(",")
+        if val is not None:
+            new_node = getattr(node, func_name)(int(nodeid), bname, val)
         else:
-            i, ok = QInputDialog.getText(self, "New node type", "int, name")
-            nodeid, bname = i.split(",")
-            print(i, ok)
-            new_node = node.add_object_type(int(nodeid), bname)
-            self._new_nodes.append(new_node)
-            self.tree_ui.reload_current()
+            new_node = getattr(node, func_name)(int(nodeid), bname)
+        self._new_nodes.append(new_node)
+        self.tree_ui.reload_current()
+        self.show_refs()
 
-    def show_refs(self, idx):
+    def _add_object_type(self):
+        return self._add_node("add_object_type")
+
+    def _add_object(self):
+        return self._add_node("add_object")
+
+    def _add_data_type(self):
+        return self._add_node("add_data_type")
+
+    def _add_variable(self):
+        return self._add_node("add_variable", 9.99)
+
+    def _add_property(self):
+        return self._add_node("add_property", 1.11)
+    def show_refs(self, idx=None):
         node = self.get_current_node(idx)
         if node:
             self.refs_ui.show_refs(node)
 
-    def show_attrs(self, idx):
+    def show_attrs(self, idx=None):
         if not isinstance(idx, QModelIndex):
             idx = None
         node = self.get_current_node(idx)
