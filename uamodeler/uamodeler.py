@@ -62,7 +62,12 @@ class UaModeler(QMainWindow):
         self.server.start()
         self.tree_ui.start(self.server)
 
-
+        # fix icon stuff
+        self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
+        self.ui.actionAddObject.setIcon(QIcon(":/object.svg"))
+        self.ui.actionAddObjectType.setIcon(QIcon(":/object_type.svg"))
+        self.ui.actionAddProperty.setIcon(QIcon(":/property.svg"))
+        self.ui.actionAddVariable.setIcon(QIcon(":/variable.svg"))
         # menu
         self.ui.treeView.addAction(self.ui.actionAddFolder)
         self.ui.treeView.addAction(self.ui.actionAddObject)

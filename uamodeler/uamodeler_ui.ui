@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../network.svg</normaloff>../network.svg</iconset>
+    <normaloff>:/object.svg</normaloff>:/object.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -143,6 +143,9 @@
     <property name="title">
      <string>Act&amp;ions</string>
     </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuOPC_UA_Client"/>
   </widget>
@@ -157,15 +160,21 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave"/>
+   <addaction name="separator"/>
    <addaction name="actionAddFolder"/>
    <addaction name="actionAddObject"/>
    <addaction name="actionAddVariable"/>
    <addaction name="actionAddProperty"/>
    <addaction name="actionAddObjectType"/>
+   <addaction name="actionAddDataType"/>
+   <addaction name="actionAddVariableType"/>
+   <addaction name="actionAddReferenceType"/>
   </widget>
   <action name="actionAddObject">
    <property name="text">
-    <string>addObject</string>
+    <string>Add Object</string>
    </property>
    <property name="toolTip">
     <string>add child object to current node</string>
@@ -173,12 +182,12 @@
   </action>
   <action name="actionAddVariable">
    <property name="text">
-    <string>addVariable</string>
+    <string>Add Variable</string>
    </property>
   </action>
   <action name="actionAddObjectType">
    <property name="text">
-    <string>addObjectType</string>
+    <string>Add Object Type</string>
    </property>
    <property name="toolTip">
     <string>add new object type as subtype of current node</string>
@@ -186,27 +195,42 @@
   </action>
   <action name="actionAddFolder">
    <property name="text">
-    <string>addFolder</string>
+    <string>Add Folder</string>
    </property>
   </action>
   <action name="actionAddProperty">
    <property name="text">
-    <string>addProperty</string>
+    <string>Add Property</string>
    </property>
   </action>
   <action name="actionAddDataType">
    <property name="text">
-    <string>addDataType</string>
+    <string>Add Data Type</string>
    </property>
   </action>
   <action name="actionAddVariableType">
    <property name="text">
-    <string>addVariableType</string>
+    <string>Add Variable Type</string>
    </property>
   </action>
   <action name="actionAddReferenceType">
    <property name="text">
-    <string>addReferenceType</string>
+    <string>Add Reference Type</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>&amp;Open</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>&amp;Quit</string>
    </property>
   </action>
  </widget>
