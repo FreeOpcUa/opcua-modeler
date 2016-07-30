@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UaModeler</class>
+ <widget class="QMainWindow" name="UaModeler">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>922</width>
+    <height>692</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>FreeOpcUa Modeler</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../network.svg</normaloff>../network.svg</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitterCenter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QSplitter" name="splitterLeft">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QTreeView" name="namespaceView"/>
+       <widget class="QTreeView" name="treeView">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::ActionsContextMenu</enum>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+        <property name="dragEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::DragOnly</enum>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QSplitter" name="splitterRight">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QFrame" name="frame">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Attributes Editor</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTreeView" name="attrView">
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContents</enum>
+           </property>
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+           <property name="showDropIndicator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="textElideMode">
+            <enum>Qt::ElideNone</enum>
+           </property>
+           <property name="autoExpandDelay">
+            <number>-1</number>
+           </property>
+           <property name="indentation">
+            <number>18</number>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+        <zorder>attrView</zorder>
+        <zorder>label</zorder>
+       </widget>
+       <widget class="QFrame" name="frame_2">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>References Editor</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableView" name="refView">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>922</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuOPC_UA_Client">
+    <property name="title">
+     <string>Act&amp;ions</string>
+    </property>
+   </widget>
+   <addaction name="menuOPC_UA_Client"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionAddFolder"/>
+   <addaction name="actionAddObject"/>
+   <addaction name="actionAddVariable"/>
+   <addaction name="actionAddProperty"/>
+   <addaction name="actionAddObjectType"/>
+  </widget>
+  <action name="actionAddObject">
+   <property name="text">
+    <string>addObject</string>
+   </property>
+   <property name="toolTip">
+    <string>add child object to current node</string>
+   </property>
+  </action>
+  <action name="actionAddVariable">
+   <property name="text">
+    <string>addVariable</string>
+   </property>
+  </action>
+  <action name="actionAddObjectType">
+   <property name="text">
+    <string>addObjectType</string>
+   </property>
+   <property name="toolTip">
+    <string>add new object type as subtype of current node</string>
+   </property>
+  </action>
+  <action name="actionAddFolder">
+   <property name="text">
+    <string>addFolder</string>
+   </property>
+  </action>
+  <action name="actionAddProperty">
+   <property name="text">
+    <string>addProperty</string>
+   </property>
+  </action>
+  <action name="actionAddDataType">
+   <property name="text">
+    <string>addDataType</string>
+   </property>
+  </action>
+  <action name="actionAddVariableType">
+   <property name="text">
+    <string>addVariableType</string>
+   </property>
+  </action>
+  <action name="actionAddReferenceType">
+   <property name="text">
+    <string>addReferenceType</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
