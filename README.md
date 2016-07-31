@@ -4,12 +4,6 @@ Python OPC UA address space buidler. This can be used to create OPC UA address s
 
 This is a work in progress 
 
-Initial goals:  
-*Generate aliases  
-*Generate basic object types  
-*Generate instances of object types  
-*Generate simple UA objects (objects, folders, variables, properties)  
-
-
+Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-modeler/issues/3
 
 ![Screenshot](/screenshot.png?raw=true "Screenshot")
