@@ -16,6 +16,7 @@ from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
+from uamodeler.namespace_widget import NamespaceWidget
 
 
 class UaModeler(QMainWindow):
@@ -45,6 +46,7 @@ class UaModeler(QMainWindow):
         self.refs_ui.error.connect(self.show_error)
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
+        self.idx_ui = NamespaceWidget(self.ui.namespaceView)
 
         self.ui.treeView.activated.connect(self.show_refs)
         self.ui.treeView.clicked.connect(self.show_refs)
@@ -60,9 +62,9 @@ class UaModeler(QMainWindow):
         self.ui.splitterRight.restoreState(self.settings.value("splitter_right", b""))
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
 
-
         self.server.start()
         self.tree_ui.start(self.server)
+        self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
         # fix icon stuff
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
