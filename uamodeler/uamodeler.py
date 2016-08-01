@@ -36,7 +36,7 @@ class NewNodeDialog(QDialog):
         layout.addWidget(self.nameLabel)
 
         self.node_type = node_type
-        self.default_value = default_value
+        self._is_variable = False
 
         if self.node_type is not None:
             name = self.node_type.get_browse_name().to_string()
@@ -44,10 +44,17 @@ class NewNodeDialog(QDialog):
             self.objectTypeButton.clicked.connect(self._get_node_type)
             layout.addWidget(self.objectTypeButton)
         
-        if self.default_value is not None:
-            self.default_value = QLineEdit(self)
-            self.default_value.setText(str(default_value))
-            layout.addWidget(self.default_value)
+        if default_value is not None:
+            self._is_variable = True
+            self.valLineEdit = QLineEdit(self)
+            self.valLineEdit.setText(str(default_value))
+            layout.addWidget(self.valLineEdit)
+
+            self.vtypeComboBox = QComboBox(self)
+            vtypes = [vt.name for vt in ua.VariantType]
+            for vtype in vtypes:
+                self.vtypeComboBox.addItem(vtype)
+            layout.addWidget(self.vtypeComboBox)
 
             self.data_type = server.get_node(ua.ObjectIds.BaseDataType)
             name = self.data_type.get_browse_name().to_string()
@@ -55,10 +62,7 @@ class NewNodeDialog(QDialog):
             self.dataTypeButton.clicked.connect(self._get_data_type)
             layout.addWidget(self.dataTypeButton)
 
-
-        self.buttons = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-            Qt.Horizontal, self)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
         layout.addWidget(self.buttons)
 
         self.buttons.accepted.connect(self.accept)
@@ -85,9 +89,10 @@ class NewNodeDialog(QDialog):
         args.append(name)
         if self.node_type is not None:
             args.append(self.node_type)
-        if self.default_value is not None:
-            args.append(self.default_value)  #FIXME need to convert depending on type
-            args.append(self.data_type)
+        if self._is_variable is not None:
+            args.append(self.valLineEdit.text())  #FIXME need to convert depending on type
+            args.append(getattr(ua.VariantType, self.vtypeComboBox.currentText()))
+            args.append(self.data_type.nodeid)
         return args
 
     @staticmethod
