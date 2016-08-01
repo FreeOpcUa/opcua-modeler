@@ -35,6 +35,7 @@ class NewNodeDialog(QDialog):
         self.nameLabel.setText("NoName")
         layout.addWidget(self.nameLabel)
 
+        self.start_node_type = node_type
         self.node_type = node_type
         self._is_variable = False
 
@@ -56,7 +57,8 @@ class NewNodeDialog(QDialog):
                 self.vtypeComboBox.addItem(vtype)
             layout.addWidget(self.vtypeComboBox)
 
-            self.data_type = server.get_node(ua.ObjectIds.BaseDataType)
+            self.original_data_type = server.get_node(ua.ObjectIds.BaseDataType)
+            self.data_type = self.original_data_type 
             name = self.data_type.get_browse_name().to_string()
             self.dataTypeButton = QPushButton(name, self)
             self.dataTypeButton.clicked.connect(self._get_data_type)
@@ -69,14 +71,14 @@ class NewNodeDialog(QDialog):
         self.buttons.rejected.connect(self.reject)
 
     def _get_data_type(self):
-        node, ok = GetNodeDialog.getNode(self, self.node_type)
+        node, ok = GetNodeDialog.getNode(self, self.original_data_type)
         if ok:
             self.node_type = node
             self.objectTypeButton.setText(node.get_browse_name().to_string())
 
 
     def _get_node_type(self):
-        node, ok = GetNodeDialog.getNode(self, self.node_type)
+        node, ok = GetNodeDialog.getNode(self, self.start_node_type)
         if ok:
             self.node_type = node
             self.objectTypeButton.setText(node.get_browse_name().to_string())
@@ -90,7 +92,7 @@ class NewNodeDialog(QDialog):
         if self.node_type is not None:
             args.append(self.node_type)
         if self._is_variable is not None:
-            args.append(self.valLineEdit.text())  #FIXME need to convert depending on type
+            args.append(self.valLineEdit.text())
             args.append(getattr(ua.VariantType, self.vtypeComboBox.currentText()))
             args.append(self.data_type.nodeid)
         return args
@@ -99,8 +101,10 @@ class NewNodeDialog(QDialog):
     def getArgs(parent, title, server, node_type=None, default_value=None):
         dialog = NewNodeDialog(parent, title, server, node_type=node_type, default_value=default_value)
         result = dialog.exec_()
-        node = dialog.get_args()
-        return node, result == QDialog.Accepted
+        if result == QDialog.Accepted:
+            return dialog.get_args(), True
+        else:
+            return [], False
 
 
 class UaModeler(QMainWindow):
@@ -192,10 +196,11 @@ class UaModeler(QMainWindow):
             raise RuntimeError("No node selected")
         args, ok = NewNodeDialog.getArgs(self, func_name, self.server, node_type=node_type, default_value=default_value)
         print("ARGS are", args)
-        new_node = getattr(node, func_name)(*args)
-        self._new_nodes.append(new_node)
-        self.tree_ui.reload_current()
-        self.show_refs()
+        if ok:
+            new_node = getattr(node, func_name)(*args)
+            self._new_nodes.append(new_node)
+            self.tree_ui.reload_current()
+            self.show_refs()
 
     def _add_object_type(self):
         return self._add_node("add_object_type")
