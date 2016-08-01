@@ -1,22 +1,101 @@
 #! /usr/bin/env python3
 
 import sys
-from datetime import datetime
-from enum import Enum
 
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QObject, QSettings, QModelIndex, QMimeData
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QAbstractItemView, QMenu, QAction, QFileDialog, QInputDialog
+from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox
 
 from opcua import ua
 from opcua import Server
 
-from uamodeler.uamodeler_ui import Ui_UaModeler
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
+from uawidgets.get_node_dialog import GetNodeDialog
+from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
+
+
+class NewNodeDialog(QDialog):
+    def __init__(self, parent, title, server, node_type=None, default_value=None):
+        QDialog.__init__(self, parent)
+        self.setWindowTitle(title)
+
+        layout = QHBoxLayout(self)
+        
+        self.nsComboBox = QComboBox(self)
+        uries = server.get_namespace_array()
+        for uri in uries:
+            self.nsComboBox.addItem(uri)
+        layout.addWidget(self.nsComboBox)
+
+        self.nameLabel = QLineEdit(self)
+        self.nameLabel.setText("NoName")
+        layout.addWidget(self.nameLabel)
+
+        self.node_type = node_type
+        self.default_value = default_value
+
+        if self.node_type is not None:
+            name = self.node_type.get_browse_name().to_string()
+            self.objectTypeButton = QPushButton(name, self)
+            self.objectTypeButton.clicked.connect(self._get_node_type)
+            layout.addWidget(self.objectTypeButton)
+        
+        if self.default_value is not None:
+            self.default_value = QLineEdit(self)
+            self.default_value.setText(str(default_value))
+            layout.addWidget(self.default_value)
+
+            self.data_type = server.get_node(ua.ObjectIds.BaseDataType)
+            name = self.data_type.get_browse_name().to_string()
+            self.dataTypeButton = QPushButton(name, self)
+            self.dataTypeButton.clicked.connect(self._get_data_type)
+            layout.addWidget(self.dataTypeButton)
+
+
+        self.buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        layout.addWidget(self.buttons)
+
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+    def _get_data_type(self):
+        node, ok = GetNodeDialog.getNode(self, self.node_type)
+        if ok:
+            self.node_type = node
+            self.objectTypeButton.setText(node.get_browse_name().to_string())
+
+
+    def _get_node_type(self):
+        node, ok = GetNodeDialog.getNode(self, self.node_type)
+        if ok:
+            self.node_type = node
+            self.objectTypeButton.setText(node.get_browse_name().to_string())
+
+    def get_args(self):
+        args = []
+        ns = self.nsComboBox.currentIndex()
+        args.append(ns)
+        name = self.nameLabel.text()
+        args.append(name)
+        if self.node_type is not None:
+            args.append(self.node_type)
+        if self.default_value is not None:
+            args.append(self.default_value)  #FIXME need to convert depending on type
+            args.append(self.data_type)
+        return args
+
+    @staticmethod
+    def getArgs(parent, title, server, node_type=None, default_value=None):
+        dialog = NewNodeDialog(parent, title, server, node_type=node_type, default_value=default_value)
+        result = dialog.exec_()
+        node = dialog.get_args()
+        return node, result == QDialog.Accepted
 
 
 class UaModeler(QMainWindow):
@@ -63,7 +142,7 @@ class UaModeler(QMainWindow):
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
 
         self.server.start()
-        self.tree_ui.start(self.server)
+        self.tree_ui.set_root_node(self.server.get_root_node())
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
         # fix icon stuff
@@ -101,17 +180,14 @@ class UaModeler(QMainWindow):
     def _save(self):
         raise NotImplementedError
 
-    def _add_node(self, func_name, val=None):
+    def _add_node(self, func_name, node_type=None, default_value=None):
         node = self.tree_ui.get_current_node()
         if not node:
             self.show_error("No node selected")
             raise RuntimeError("No node selected")
-        i, ok = QInputDialog.getText(self, func_name, "int, name")
-        nodeid, bname = i.split(",")
-        if val is not None:
-            new_node = getattr(node, func_name)(int(nodeid), bname, val)
-        else:
-            new_node = getattr(node, func_name)(int(nodeid), bname)
+        args, ok = NewNodeDialog.getArgs(self, func_name, self.server, node_type=node_type, default_value=default_value)
+        print("ARGS are", args)
+        new_node = getattr(node, func_name)(*args)
         self._new_nodes.append(new_node)
         self.tree_ui.reload_current()
         self.show_refs()
@@ -120,16 +196,17 @@ class UaModeler(QMainWindow):
         return self._add_node("add_object_type")
 
     def _add_object(self):
-        return self._add_node("add_object")
+        return self._add_node("add_object", node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
 
     def _add_data_type(self):
         return self._add_node("add_data_type")
 
     def _add_variable(self):
-        return self._add_node("add_variable", 9.99)
+        return self._add_node("add_variable", default_value=9.99)
 
     def _add_property(self):
-        return self._add_node("add_property", 1.11)
+        return self._add_node("add_property", default_value=1.11)
+
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
         if node:
