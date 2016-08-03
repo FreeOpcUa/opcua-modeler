@@ -56,7 +56,7 @@ class Ui_UaModeler(object):
         self.verticalLayout.addWidget(self.label)
         self.attrView = QtWidgets.QTreeView(self.frame)
         self.attrView.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.attrView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.attrView.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
         self.attrView.setProperty("showDropIndicator", False)
         self.attrView.setTextElideMode(QtCore.Qt.ElideNone)
         self.attrView.setAutoExpandDelay(-1)
