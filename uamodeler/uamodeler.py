@@ -155,6 +155,9 @@ class UaModeler(QMainWindow):
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
         # fix icon stuff
+        self.ui.actionNew.setIcon(QIcon(":/new.svg"))
+        self.ui.actionOpen.setIcon(QIcon(":/open.svg"))
+        self.ui.actionSave.setIcon(QIcon(":/save.svg"))
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
         self.ui.actionAddObject.setIcon(QIcon(":/object.svg"))
         self.ui.actionAddObjectType.setIcon(QIcon(":/object_type.svg"))
