@@ -145,6 +145,7 @@
     </property>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
+    <addaction name="actionImport"/>
     <addaction name="actionSave"/>
     <addaction name="actionSaveAs"/>
     <addaction name="actionQuit"/>
@@ -238,12 +239,17 @@
   </action>
   <action name="actionNew">
    <property name="text">
-    <string>New Model</string>
+    <string>&amp;New Model</string>
    </property>
   </action>
   <action name="actionSaveAs">
    <property name="text">
-    <string>Save As</string>
+    <string>Sa&amp;ve As</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import XML</string>
    </property>
   </action>
  </widget>

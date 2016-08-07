@@ -91,7 +91,7 @@ class NewNodeDialog(QDialog):
         args.append(name)
         if self.node_type is not None:
             args.append(self.node_type)
-        if self._is_variable is not None:
+        if self._is_variable:
             args.append(self.valLineEdit.text())
             args.append(getattr(ua.VariantType, self.vtypeComboBox.currentText()))
             args.append(self.data_type.nodeid)
@@ -127,7 +127,6 @@ class UaModeler(QMainWindow):
 
         self._new_nodes = []  # the added nodes we will save
 
-
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
         self.refs_ui = RefsWidget(self.ui.refView)
@@ -151,8 +150,8 @@ class UaModeler(QMainWindow):
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
 
         self.server.start()
-        self.tree_ui.set_root_node(self.server.get_root_node())
-        self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
+        #self.tree_ui.set_root_node(self.server.get_root_node())
+        #self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
         # fix icon stuff
         self.ui.actionNew.setIcon(QIcon(":/new.svg"))
@@ -175,28 +174,56 @@ class UaModeler(QMainWindow):
         self.ui.treeView.addAction(self.ui.actionAddDataType)
 
         # actions
+        self.ui.actionNew.triggered.connect(self._new)
         self.ui.actionOpen.triggered.connect(self._open)
+        self.ui.actionImport.triggered.connect(self._import)
         self.ui.actionSave.triggered.connect(self._save)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
+        self.ui.actionAddFolder.triggered.connect(self._add_folder)
         self.ui.actionAddDataType.triggered.connect(self._add_data_type)
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
         self.ui.actionAddProperty.triggered.connect(self._add_property)
 
+    def _new(self):
+        self.tree_ui.clear()
+        self.refs_ui.clear()
+        self.attrs_ui.clear()
+        self.idx_ui.clear()
+        self.server.iserver.aspace.empty()
+        self.server.iserver.load_standard_address_space()
+        self.server.iserver.setup_nodes()
+        self.server.register_namespace(self.server.application_uri)
+
+        self.tree_ui.set_root_node(self.server.get_root_node())
+        self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
+
+    def _import(self):
+        path, ok = QFileDialog.getOpenFileName(self)
+        if ok:
+            try:
+                self.server.import_xml()
+            except Exception as ex:
+                self.show_error(ex)
+                raise
+
     def _open(self):
-        path = QFileDialog.getOpenFileName(self)
-        f = open(path[0], 'r')
-        xml = f.read()
-        print("should read", xml)
+        path, ok = QFileDialog.getOpenFileName(self)
+        if ok:
+            self._new()
+            try:
+                self.server.import_xml()
+            except Exception as ex:
+                self.show_error(ex)
+                raise
 
     def _save(self):
+        print("Should export nodes: ", self._new_nodes)
+        print("and namespaces: ", self.server.get_namespace_array()[1:])
         raise NotImplementedError
 
     def _add_node(self, func_name, node_type=None, default_value=None):
         node = self.tree_ui.get_current_node()
-        if not node:
-            self.show_error("No node selected")
-            raise RuntimeError("No node selected")
         args, ok = NewNodeDialog.getArgs(self, func_name, self.server, node_type=node_type, default_value=default_value)
         print("ARGS are", args)
         if ok:
@@ -207,6 +234,9 @@ class UaModeler(QMainWindow):
 
     def _add_object_type(self):
         return self._add_node("add_object_type")
+
+    def _add_folder(self):
+        return self._add_node("add_folder")
 
     def _add_object(self):
         return self._add_node("add_object", node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
@@ -222,15 +252,13 @@ class UaModeler(QMainWindow):
 
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
-        if node:
-            self.refs_ui.show_refs(node)
+        self.refs_ui.show_refs(node)
 
     def show_attrs(self, idx=None):
         if not isinstance(idx, QModelIndex):
             idx = None
         node = self.get_current_node(idx)
-        if node:
-            self.attrs_ui.show_attrs(node)
+        self.attrs_ui.show_attrs(node)
 
     def show_error(self, msg, level=1):
         print("showing error: ", msg, level)
