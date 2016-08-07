@@ -71,6 +71,8 @@ class NamespaceWidget(QObject):
     def showContextMenu(self, position):
         self.removeNamespaceAction.setEnabled(False)
         idx = self.view.currentIndex()
+        if not idx.isValid():
+            return
         if idx.parent().isValid() and idx.row() > 1:
             uri_it = self.model.itemFromIndex(idx.sibling(idx.row(), 2))
             self._namespace_to_delete = uri_it.text()

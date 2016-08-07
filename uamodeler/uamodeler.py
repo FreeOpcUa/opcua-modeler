@@ -198,27 +198,23 @@ class UaModeler(QMainWindow):
         self.tree_ui.set_root_node(self.server.get_root_node())
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
-    def _import(self):
-        path, ok = QFileDialog.getOpenFileName(self)
+    def _import(self, reset=False):
+        path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
+            if reset:
+                self._new()
             try:
-                self.server.import_xml()
+                new_nodes = self.server.import_xml(path)
+                self._new_nodes.extend(new_nodes)
             except Exception as ex:
                 self.show_error(ex)
                 raise
 
     def _open(self):
-        path, ok = QFileDialog.getOpenFileName(self)
-        if ok:
-            self._new()
-            try:
-                self.server.import_xml()
-            except Exception as ex:
-                self.show_error(ex)
-                raise
+        self._import(reset=True)
 
     def _save(self):
-        print("Should export nodes: ", self._new_nodes)
+        print("Should export {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[1:])
         raise NotImplementedError
 
