@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox
 
 from opcua import ua
 from opcua import Server
@@ -120,12 +120,11 @@ class UaModeler(QMainWindow):
 
         # load settings, seconds arg is default
         self.settings = QSettings("FreeOpcUa", "OpcUaModeler")
+        self._restore_state()
 
-        self.server = Server()
-        self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
-        self.server.set_server_name("OpcUa Modeler Server")
-
+        self.server = None
         self._new_nodes = []  # the added nodes we will save
+        self._modified = False
 
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
@@ -139,19 +138,6 @@ class UaModeler(QMainWindow):
         self.ui.treeView.clicked.connect(self.show_refs)
         self.ui.treeView.activated.connect(self.show_attrs)
         self.ui.treeView.clicked.connect(self.show_attrs)
-
-
-        self.resize(int(self.settings.value("main_window_width", 800)), int(self.settings.value("main_window_height", 600)))
-        #self.restoreState(self.settings.value("main_window_state", b"", type="QByteArray"))
-        self.restoreState(self.settings.value("main_window_state", b""))
-       
-        self.ui.splitterLeft.restoreState(self.settings.value("splitter_left", b""))
-        self.ui.splitterRight.restoreState(self.settings.value("splitter_right", b""))
-        self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
-
-        self.server.start()
-        #self.tree_ui.set_root_node(self.server.get_root_node())
-        #self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
 
         # fix icon stuff
         self.ui.actionNew.setIcon(QIcon(":/new.svg"))
@@ -185,66 +171,110 @@ class UaModeler(QMainWindow):
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
         self.ui.actionAddProperty.triggered.connect(self._add_property)
 
+    def _restore_state(self):
+        self.resize(int(self.settings.value("main_window_width", 800)),
+                    int(self.settings.value("main_window_height", 600)))
+        #self.restoreState(self.settings.value("main_window_state", b"", type="QByteArray"))
+        self.restoreState(self.settings.value("main_window_state", b""))
+        self.ui.splitterLeft.restoreState(self.settings.value("splitter_left", b""))
+        self.ui.splitterRight.restoreState(self.settings.value("splitter_right", b""))
+        self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
+
     def _new(self):
+        if not self.really_exit():
+            return False
         self.tree_ui.clear()
         self.refs_ui.clear()
         self.attrs_ui.clear()
         self.idx_ui.clear()
-        self.server.iserver.aspace.empty()
-        self.server.iserver.load_standard_address_space()
-        self.server.iserver.setup_nodes()
-        self.server.register_namespace(self.server.application_uri)
+        if self.server is not None:
+            self.server.stop()
+        self.server = Server()
+        self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
+        self.server.set_server_name("OpcUa Modeler Server")
 
+        self._new_nodes = []  # the added nodes we will save
+
+        self.server.start()
         self.tree_ui.set_root_node(self.server.get_root_node())
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
+        self._modified = False
+        return True
 
-    def _import(self, reset=False):
+    def _import(self):
         path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
-            if reset:
-                self._new()
             try:
                 new_nodes = self.server.import_xml(path)
                 self._new_nodes.extend(new_nodes)
+                self._modified = True
             except Exception as ex:
                 self.show_error(ex)
                 raise
 
     def _open(self):
-        self._import(reset=True)
+        if self._new():
+            self._import()
+            self._modified = False
 
     def _save(self):
         print("Should export {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[1:])
         raise NotImplementedError
+        self._modified = False
 
-    def _add_node(self, func_name, node_type=None, default_value=None):
-        node = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, func_name, self.server, node_type=node_type, default_value=default_value)
-        print("ARGS are", args)
-        if ok:
-            new_node = getattr(node, func_name)(*args)
-            self._new_nodes.append(new_node)
-            self.tree_ui.reload_current()
-            self.show_refs()
+    def really_exit(self):
+        if self._modified:
+            reply = QMessageBox.question(self, 
+                                         "OPC UA Modeler",
+                                         "Model is modified, do you really want to close model?",
+                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if reply != QMessageBox.Yes:
+                return False
+
+        return True
+
+    def _after_add(self, new_node):
+        self._new_nodes.append(new_node)
+        self.tree_ui.reload_current()
+        self.show_refs()
+        self._modified = True
 
     def _add_object_type(self):
-        return self._add_node("add_object_type")
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Object Type", self.server)
+        new_node = parent.add_object_type(*args)
+        self._after_add(new_node)
 
     def _add_folder(self):
-        return self._add_node("add_folder")
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Folder", self.server)
+        new_node = parent.add_folder(*args)
+        self._after_add(new_node)
 
     def _add_object(self):
-        return self._add_node("add_object", node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Object", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
+        new_node = parent.add_object(*args)
+        self._after_add(new_node)
 
     def _add_data_type(self):
-        return self._add_node("add_data_type")
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Data Type", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseDataType))
+        new_node = parent.add_data_type(*args)
+        self._after_add(new_node)
 
     def _add_variable(self):
-        return self._add_node("add_variable", default_value=9.99)
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
+        new_node = parent.add_variable(*args)
+        self._after_add(new_node)
 
     def _add_property(self):
-        return self._add_node("add_property", default_value=1.11)
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewNodeDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
+        new_node = parent.add_property(*args)
+        self._after_add(new_node)
 
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
@@ -267,13 +297,17 @@ class UaModeler(QMainWindow):
         return self.tree_ui.get_current_node(idx)
 
     def closeEvent(self, event):
+        if not self.really_exit():
+            event.ignore()
+            return
         self.settings.setValue("main_window_width", self.size().width())
         self.settings.setValue("main_window_height", self.size().height())
         self.settings.setValue("main_window_state", self.saveState())
         self.settings.setValue("splitter_left", self.ui.splitterLeft.saveState())
         self.settings.setValue("splitter_right", self.ui.splitterRight.saveState())
         self.settings.setValue("splitter_center", self.ui.splitterCenter.saveState())
-        self.server.stop()
+        if self.server:
+            self.server.stop()
         event.accept()
 
 
