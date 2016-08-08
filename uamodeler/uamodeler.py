@@ -3,8 +3,8 @@
 import sys
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox
+from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox, QStyledItemDelegate
 
 from opcua import ua
 from opcua import Server
@@ -107,6 +107,21 @@ class NewNodeDialog(QDialog):
             return [], False
 
 
+class BoldDelegate(QStyledItemDelegate):
+
+    def __init__(self, parent, model, added_node_list):
+        QStyledItemDelegate.__init__(self, parent)
+        self.added_node_list = added_node_list
+        self.model = model
+
+    def paint(self, painter, option, idx):
+        idx = idx.sibling(idx.row(), 0)
+        item = self.model.itemFromIndex(idx)
+        if item and item.data() in self.added_node_list:
+            option.font.setWeight(QFont.Bold)
+        QStyledItemDelegate.paint(self, painter, option, idx)
+
+
 class UaModeler(QMainWindow):
 
     def __init__(self):
@@ -128,6 +143,9 @@ class UaModeler(QMainWindow):
 
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
+        delegate = BoldDelegate(self, self.tree_ui.model, self._new_nodes)
+        self.ui.treeView.setItemDelegate(delegate)
+
         self.refs_ui = RefsWidget(self.ui.refView)
         self.refs_ui.error.connect(self.show_error)
         self.attrs_ui = AttrsWidget(self.ui.attrView)
@@ -193,7 +211,7 @@ class UaModeler(QMainWindow):
         self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
         self.server.set_server_name("OpcUa Modeler Server")
 
-        self._new_nodes = []  # the added nodes we will save
+        del(self._new_nodes[:])  # empty list while keeping reference
 
         self.server.start()
         self.tree_ui.set_root_node(self.server.get_root_node())
