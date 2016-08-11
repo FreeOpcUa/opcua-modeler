@@ -141,6 +141,7 @@ class UaModeler(QMainWindow):
 
         self.server = None
         self._new_nodes = []  # the added nodes we will save
+        self._current_path = None
         self._modified = False
 
         self.tree_ui = TreeWidget(self.ui.treeView)
@@ -186,6 +187,7 @@ class UaModeler(QMainWindow):
         self.ui.actionOpen.triggered.connect(self._open)
         self.ui.actionImport.triggered.connect(self._import)
         self.ui.actionSave.triggered.connect(self._save)
+        self.ui.actionSaveAs.triggered.connect(self._save_as)
         self.ui.actionCloseModel.triggered.connect(self._close_model)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
@@ -208,6 +210,7 @@ class UaModeler(QMainWindow):
     def _disable_actions(self):
         self.ui.actionImport.setEnabled(False)
         self.ui.actionSave.setEnabled(False)
+        self.ui.actionSaveAs.setEnabled(False)
         self.ui.actionAddObject.setEnabled(False)
         self.ui.actionAddFolder.setEnabled(False)
         self.ui.actionAddVariable.setEnabled(False)
@@ -219,7 +222,7 @@ class UaModeler(QMainWindow):
     def _enable_actions(self):
         self.ui.actionImport.setEnabled(True)
         self.ui.actionSave.setEnabled(True)
-        self.ui.actionSave.setEnabled(True)
+        self.ui.actionSaveAs.setEnabled(True)
         self.ui.actionAddObject.setEnabled(True)
         self.ui.actionAddFolder.setEnabled(True)
         self.ui.actionAddVariable.setEnabled(True)
@@ -236,11 +239,15 @@ class UaModeler(QMainWindow):
         self.refs_ui.clear()
         self.attrs_ui.clear()
         self.idx_ui.clear()
-        self.setWindowTitle("FreeOpcUa Modeler")
+        self._current_path = None
+        self._update_title()
         if self.server is not None:
             self.server.stop()
         self.server = None
         return True
+
+    def _update_title(self):
+        self.setWindowTitle("FreeOpcUa Modeler " + str(self._current_path))
 
     def _new(self):
         if not self._close_model():
@@ -256,7 +263,8 @@ class UaModeler(QMainWindow):
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
         self._modified = False
         self._enable_actions()
-        self.setWindowTitle("FreeOpcUa Modeler: No Name")
+        self._current_path = "NoName"
+        self._update_title()
         return True
 
     def _import(self):
@@ -276,14 +284,29 @@ class UaModeler(QMainWindow):
         if self._new():
             path = self._import()
             self._modified = False
-            self.setWindowTitle("FreeOpcUa Modeler:" + path)
+            self._current_path = path
+            self._update_title()
+
+    def _save_as(self):
+        path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
+        if ok:
+            self._current_path = path
+            self._update_title()
+            self._save()
 
     def _save(self):
+        print("CURRENT", self._current_path)
+        if not self._current_path or self._current_path == "NoName":
+            path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
+            self._current_path = path
+            if not ok:
+                return
+        print("Saving to", self._current_path)
         print("Should export {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[1:])
-        raise NotImplementedError
-        self.setWindowTitle("FreeOpcUa Modeler: " + path)
         self._modified = False
+        self._update_title()
+        raise NotImplementedError
 
     def really_exit(self):
         if self._modified:
