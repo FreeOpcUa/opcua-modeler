@@ -311,32 +311,37 @@ class UaModeler(QMainWindow):
     def _add_folder(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Folder", self.server)
-        new_node = parent.add_folder(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_folder(*args)
+            self._after_add(new_node)
 
     def _add_object(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Object", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
-        new_node = parent.add_object(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_object(*args)
+            self._after_add(new_node)
 
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Data Type", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseDataType))
-        new_node = parent.add_data_type(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_data_type(*args)
+            self._after_add(new_node)
 
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
-        new_node = parent.add_variable(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_variable(*args)
+            self._after_add(new_node)
 
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
-        new_node = parent.add_property(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_property(*args)
+            self._after_add(new_node)
 
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
