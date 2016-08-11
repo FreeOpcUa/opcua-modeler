@@ -236,6 +236,7 @@ class UaModeler(QMainWindow):
         self.refs_ui.clear()
         self.attrs_ui.clear()
         self.idx_ui.clear()
+        self.setWindowTitle("FreeOpcUa Modeler")
         if self.server is not None:
             self.server.stop()
         self.server = None
@@ -255,6 +256,7 @@ class UaModeler(QMainWindow):
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
         self._modified = False
         self._enable_actions()
+        self.setWindowTitle("FreeOpcUa Modeler: No Name")
         return True
 
     def _import(self):
@@ -264,19 +266,23 @@ class UaModeler(QMainWindow):
                 new_nodes = self.server.import_xml(path)
                 self._new_nodes.extend(new_nodes)
                 self._modified = True
+                return path
             except Exception as ex:
                 self.show_error(ex)
                 raise
+        return None
 
     def _open(self):
         if self._new():
-            self._import()
+            path = self._import()
             self._modified = False
+            self.setWindowTitle("FreeOpcUa Modeler:" + path)
 
     def _save(self):
         print("Should export {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[1:])
         raise NotImplementedError
+        self.setWindowTitle("FreeOpcUa Modeler: " + path)
         self._modified = False
 
     def really_exit(self):
