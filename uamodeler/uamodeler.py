@@ -167,6 +167,8 @@ class UaModeler(QMainWindow):
         self.ui.actionAddProperty.setIcon(QIcon(":/property.svg"))
         self.ui.actionAddVariable.setIcon(QIcon(":/variable.svg"))
         self.ui.actionAddVariableType.setIcon(QIcon(":/variable_type.svg"))
+        self.ui.actionAddDataType.setIcon(QIcon(":/data_type.svg"))
+        self.ui.actionAddReferenceType.setIcon(QIcon(":/reference_type.svg"))
 
         # menu
         self.ui.treeView.addAction(self.ui.actionAddFolder)
