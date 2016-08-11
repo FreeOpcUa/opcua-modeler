@@ -2,7 +2,7 @@
 
 import sys
 
-from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt
+from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox, QStyledItemDelegate
 
@@ -76,7 +76,6 @@ class NewNodeDialog(QDialog):
             self.node_type = node
             self.objectTypeButton.setText(node.get_browse_name().to_string())
 
-
     def _get_node_type(self):
         node, ok = GetNodeDialog.getNode(self, self.start_node_type)
         if ok:
@@ -133,8 +132,11 @@ class UaModeler(QMainWindow):
         # we only show statusbar in case of errors
         self.ui.statusBar.hide()
 
-        # load settings, seconds arg is default
-        self.settings = QSettings("FreeOpcUa", "OpcUaModeler")
+        # setup QSettings for application and get a settings object
+        QCoreApplication.setOrganizationName("FreeOpcUa")
+        QCoreApplication.setApplicationName("OpcUaModeler")
+        self.settings = QSettings()
+
         self._restore_state()
 
         self.server = None
