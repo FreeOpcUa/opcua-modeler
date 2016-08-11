@@ -186,12 +186,15 @@ class UaModeler(QMainWindow):
         self.ui.actionOpen.triggered.connect(self._open)
         self.ui.actionImport.triggered.connect(self._import)
         self.ui.actionSave.triggered.connect(self._save)
+        self.ui.actionCloseModel.triggered.connect(self._close_model)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
         self.ui.actionAddFolder.triggered.connect(self._add_folder)
         self.ui.actionAddDataType.triggered.connect(self._add_data_type)
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
         self.ui.actionAddProperty.triggered.connect(self._add_property)
+
+        self._disable_actions()
 
     def _restore_state(self):
         self.resize(int(self.settings.value("main_window_width", 800)),
@@ -202,15 +205,45 @@ class UaModeler(QMainWindow):
         self.ui.splitterRight.restoreState(self.settings.value("splitter_right", b""))
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
 
-    def _new(self):
+    def _disable_actions(self):
+        self.ui.actionImport.setEnabled(False)
+        self.ui.actionSave.setEnabled(False)
+        self.ui.actionAddObject.setEnabled(False)
+        self.ui.actionAddFolder.setEnabled(False)
+        self.ui.actionAddVariable.setEnabled(False)
+        self.ui.actionAddProperty.setEnabled(False)
+        self.ui.actionAddDataType.setEnabled(False)
+        self.ui.actionAddVariableType.setEnabled(False)
+        self.ui.actionAddObjectType.setEnabled(False)
+
+    def _enable_actions(self):
+        self.ui.actionImport.setEnabled(True)
+        self.ui.actionSave.setEnabled(True)
+        self.ui.actionSave.setEnabled(True)
+        self.ui.actionAddObject.setEnabled(True)
+        self.ui.actionAddFolder.setEnabled(True)
+        self.ui.actionAddVariable.setEnabled(True)
+        self.ui.actionAddProperty.setEnabled(True)
+        self.ui.actionAddDataType.setEnabled(True)
+        self.ui.actionAddVariableType.setEnabled(True)
+        self.ui.actionAddObjectType.setEnabled(True)
+
+    def _close_model(self):
         if not self.really_exit():
             return False
+        self._disable_actions()
         self.tree_ui.clear()
         self.refs_ui.clear()
         self.attrs_ui.clear()
         self.idx_ui.clear()
         if self.server is not None:
             self.server.stop()
+        self.server = None
+        return True
+
+    def _new(self):
+        if not self._close_model():
+            return
         self.server = Server()
         self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
         self.server.set_server_name("OpcUa Modeler Server")
@@ -221,6 +254,7 @@ class UaModeler(QMainWindow):
         self.tree_ui.set_root_node(self.server.get_root_node())
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
         self._modified = False
+        self._enable_actions()
         return True
 
     def _import(self):
@@ -319,7 +353,7 @@ class UaModeler(QMainWindow):
         return self.tree_ui.get_current_node(idx)
 
     def closeEvent(self, event):
-        if not self.really_exit():
+        if not self._close_model():
             event.ignore()
             return
         self.settings.setValue("main_window_width", self.size().width())

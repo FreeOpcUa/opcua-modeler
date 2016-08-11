@@ -144,6 +144,7 @@
      <string>Act&amp;ions</string>
     </property>
     <addaction name="actionNew"/>
+    <addaction name="actionCloseModel"/>
     <addaction name="actionOpen"/>
     <addaction name="actionImport"/>
     <addaction name="actionSave"/>
@@ -249,7 +250,18 @@
   </action>
   <action name="actionImport">
    <property name="text">
-    <string>Import XML</string>
+    <string>&amp;Import XML</string>
+   </property>
+   <property name="toolTip">
+    <string>Import XML into current model</string>
+   </property>
+  </action>
+  <action name="actionCloseModel">
+   <property name="text">
+    <string>Close Model</string>
+   </property>
+   <property name="toolTip">
+    <string>Close current model</string>
    </property>
   </action>
  </widget>
