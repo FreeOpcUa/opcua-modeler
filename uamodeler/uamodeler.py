@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox, QStyledItemDelegate
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox, QStyledItemDelegate, QMenu
 
 from opcua import ua
 from opcua import Server
@@ -164,6 +164,8 @@ class UaModeler(QMainWindow):
         # fix icon stuff
         self.ui.actionNew.setIcon(QIcon(":/new.svg"))
         self.ui.actionOpen.setIcon(QIcon(":/open.svg"))
+        self.ui.actionCopy.setIcon(QIcon(":/copy.svg"))
+        self.ui.actionSave.setIcon(QIcon(":/paste.svg"))
         self.ui.actionSave.setIcon(QIcon(":/save.svg"))
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
         self.ui.actionAddObject.setIcon(QIcon(":/object.svg"))
@@ -174,14 +176,7 @@ class UaModeler(QMainWindow):
         self.ui.actionAddDataType.setIcon(QIcon(":/data_type.svg"))
         self.ui.actionAddReferenceType.setIcon(QIcon(":/reference_type.svg"))
 
-        # menu
-        self.ui.treeView.addAction(self.ui.actionAddFolder)
-        self.ui.treeView.addAction(self.ui.actionAddObject)
-        self.ui.treeView.addAction(self.ui.actionAddVariable)
-        self.ui.treeView.addAction(self.ui.actionAddProperty)
-        self.ui.treeView.addAction(self.ui.actionAddObjectType)
-        self.ui.treeView.addAction(self.ui.actionAddVariableType)
-        self.ui.treeView.addAction(self.ui.actionAddDataType)
+        self.setup_context_menu_tree()
 
         # actions
         self.ui.actionNew.triggered.connect(self._new)
@@ -198,6 +193,27 @@ class UaModeler(QMainWindow):
         self.ui.actionAddProperty.triggered.connect(self._add_property)
 
         self._disable_actions()
+
+    def setup_context_menu_tree(self):
+        self.ui.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.treeView.customContextMenuRequested.connect(self._show_context_menu_tree)
+        self._contextMenu = QMenu()
+
+        # tree view menu
+        self._contextMenu.addAction(self.ui.actionCopy)
+        self._contextMenu.addAction(self.ui.actionPaste)
+        self._contextMenu.addAction(self.ui.actionAddFolder)
+        self._contextMenu.addAction(self.ui.actionAddObject)
+        self._contextMenu.addAction(self.ui.actionAddVariable)
+        self._contextMenu.addAction(self.ui.actionAddProperty)
+        self._contextMenu.addAction(self.ui.actionAddObjectType)
+        self._contextMenu.addAction(self.ui.actionAddVariableType)
+        self._contextMenu.addAction(self.ui.actionAddDataType)
+
+    def _show_context_menu_tree(self, position):
+        idx = self.ui.treeView.currentIndex()
+        if idx.isValid():
+            self._contextMenu.exec_(self.ui.treeView.mapToGlobal(position))
 
     def set_modified(self):
         self._modified = True

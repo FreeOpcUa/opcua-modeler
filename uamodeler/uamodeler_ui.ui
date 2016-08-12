@@ -168,6 +168,9 @@
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
    <addaction name="separator"/>
+   <addaction name="actionCopy"/>
+   <addaction name="actionPaste"/>
+   <addaction name="separator"/>
    <addaction name="actionAddFolder"/>
    <addaction name="actionAddObject"/>
    <addaction name="actionAddVariable"/>
@@ -258,10 +261,20 @@
   </action>
   <action name="actionCloseModel">
    <property name="text">
-    <string>Close Model</string>
+    <string>&amp;Close Model</string>
    </property>
    <property name="toolTip">
     <string>Close current model</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="text">
+    <string>Paste</string>
    </property>
   </action>
  </widget>
