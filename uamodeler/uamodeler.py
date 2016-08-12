@@ -153,6 +153,7 @@ class UaModeler(QMainWindow):
         self.refs_ui.error.connect(self.show_error)
         self.attrs_ui = AttrsWidget(self.ui.attrView)
         self.attrs_ui.error.connect(self.show_error)
+        self.attrs_ui.modified.connect(self.set_modified)
         self.idx_ui = NamespaceWidget(self.ui.namespaceView)
 
         self.ui.treeView.activated.connect(self.show_refs)
@@ -197,6 +198,9 @@ class UaModeler(QMainWindow):
         self.ui.actionAddProperty.triggered.connect(self._add_property)
 
         self._disable_actions()
+
+    def set_modified(self):
+        self._modified = True
 
     def _restore_state(self):
         self.resize(int(self.settings.value("main_window_width", 800)),
