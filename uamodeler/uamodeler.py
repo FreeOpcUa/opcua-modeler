@@ -328,8 +328,9 @@ class UaModeler(QMainWindow):
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeDialog.getArgs(self, "Add Object Type", self.server)
-        new_node = parent.add_object_type(*args)
-        self._after_add(new_node)
+        if ok:
+            new_node = parent.add_object_type(*args)
+            self._after_add(new_node)
 
     def _add_folder(self):
         parent = self.tree_ui.get_current_node()
