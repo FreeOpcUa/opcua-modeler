@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton,
 from opcua import ua
 from opcua import Server
 from opcua import copy_node
+from opcua.common.ua_utils import get_node_children
 
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
@@ -115,8 +116,8 @@ class BoldDelegate(QStyledItemDelegate):
         self.model = model
 
     def paint(self, painter, option, idx):
-        idx = idx.sibling(idx.row(), 0)
-        item = self.model.itemFromIndex(idx)
+        new_idx = idx.sibling(idx.row(), 0)
+        item = self.model.itemFromIndex(new_idx)
         if item and item.data() in self.added_node_list:
             option.font.setWeight(QFont.Bold)
         QStyledItemDelegate.paint(self, painter, option, idx)
@@ -168,6 +169,7 @@ class UaModeler(QMainWindow):
         self.ui.actionOpen.setIcon(QIcon(":/open.svg"))
         self.ui.actionCopy.setIcon(QIcon(":/copy.svg"))
         self.ui.actionSave.setIcon(QIcon(":/paste.svg"))
+        self.ui.actionDelete.setIcon(QIcon(":/delete.svg"))
         self.ui.actionSave.setIcon(QIcon(":/save.svg"))
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
         self.ui.actionAddObject.setIcon(QIcon(":/object.svg"))
@@ -185,6 +187,7 @@ class UaModeler(QMainWindow):
         self.ui.actionOpen.triggered.connect(self._open)
         self.ui.actionCopy.triggered.connect(self._copy)
         self.ui.actionPaste.triggered.connect(self._paste)
+        self.ui.actionDelete.triggered.connect(self._delete)
         self.ui.actionImport.triggered.connect(self._import)
         self.ui.actionSave.triggered.connect(self._save)
         self.ui.actionSaveAs.triggered.connect(self._save_as)
@@ -206,6 +209,8 @@ class UaModeler(QMainWindow):
         # tree view menu
         self._contextMenu.addAction(self.ui.actionCopy)
         self._contextMenu.addAction(self.ui.actionPaste)
+        self._contextMenu.addAction(self.ui.actionDelete)
+        self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionAddFolder)
         self._contextMenu.addAction(self.ui.actionAddObject)
         self._contextMenu.addAction(self.ui.actionAddVariable)
@@ -218,6 +223,14 @@ class UaModeler(QMainWindow):
         idx = self.ui.treeView.currentIndex()
         if idx.isValid():
             self._contextMenu.exec_(self.ui.treeView.mapToGlobal(position))
+
+    def _delete(self):
+        node = self.tree_ui.get_current_node()
+        if node:
+            nodes = get_node_children(node)
+            for n in nodes:
+                n.delete()
+            self.tree_ui.remove_current_item()
 
     def _copy(self):
         node = self.tree_ui.get_current_node()
@@ -232,7 +245,7 @@ class UaModeler(QMainWindow):
             except Exception as ex:
                 self.show_error(ex)
                 raise
-            self._new_nodes.extend([node.nodeid for node in added_nodes])
+            self._new_nodes.extend(added_nodes)
             self.tree_ui.reload_current()
             self.show_refs()
             self._modified = True

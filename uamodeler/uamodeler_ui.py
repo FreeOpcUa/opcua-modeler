@@ -130,6 +130,10 @@ class Ui_UaModeler(object):
         self.actionCopy.setObjectName("actionCopy")
         self.actionPaste = QtWidgets.QAction(UaModeler)
         self.actionPaste.setObjectName("actionPaste")
+        self.actionDelete = QtWidgets.QAction(UaModeler)
+        self.actionDelete.setObjectName("actionDelete")
+        self.actionInstantiate = QtWidgets.QAction(UaModeler)
+        self.actionInstantiate.setObjectName("actionInstantiate")
         self.menuOPC_UA_Client.addAction(self.actionNew)
         self.menuOPC_UA_Client.addAction(self.actionCloseModel)
         self.menuOPC_UA_Client.addAction(self.actionOpen)
@@ -185,4 +189,6 @@ class Ui_UaModeler(object):
         self.actionCloseModel.setToolTip(_translate("UaModeler", "Close current model"))
         self.actionCopy.setText(_translate("UaModeler", "Copy"))
         self.actionPaste.setText(_translate("UaModeler", "Paste"))
+        self.actionDelete.setText(_translate("UaModeler", "Delete Node"))
+        self.actionInstantiate.setText(_translate("UaModeler", "Instantiate"))
 

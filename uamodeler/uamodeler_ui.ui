@@ -277,6 +277,16 @@
     <string>Paste</string>
    </property>
   </action>
+  <action name="actionDelete">
+   <property name="text">
+    <string>Delete Node</string>
+   </property>
+  </action>
+  <action name="actionInstantiate">
+   <property name="text">
+    <string>Instantiate</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
