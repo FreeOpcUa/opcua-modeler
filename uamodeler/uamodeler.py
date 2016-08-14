@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton,
 
 from opcua import ua
 from opcua import Server
+from opcua import copy_node
 
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
@@ -143,6 +144,7 @@ class UaModeler(QMainWindow):
         self._new_nodes = []  # the added nodes we will save
         self._current_path = None
         self._modified = False
+        self._copy_clipboard = None
 
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
@@ -181,6 +183,8 @@ class UaModeler(QMainWindow):
         # actions
         self.ui.actionNew.triggered.connect(self._new)
         self.ui.actionOpen.triggered.connect(self._open)
+        self.ui.actionCopy.triggered.connect(self._copy)
+        self.ui.actionPaste.triggered.connect(self._paste)
         self.ui.actionImport.triggered.connect(self._import)
         self.ui.actionSave.triggered.connect(self._save)
         self.ui.actionSaveAs.triggered.connect(self._save_as)
@@ -214,6 +218,24 @@ class UaModeler(QMainWindow):
         idx = self.ui.treeView.currentIndex()
         if idx.isValid():
             self._contextMenu.exec_(self.ui.treeView.mapToGlobal(position))
+
+    def _copy(self):
+        node = self.tree_ui.get_current_node()
+        if node:
+            self._copy_clipboard = node
+
+    def _paste(self):
+        if self._copy_clipboard:
+            parent = self.tree_ui.get_current_node()
+            try:
+                added_nodes = copy_node(parent, self._copy_clipboard)
+            except Exception as ex:
+                self.show_error(ex)
+                raise
+            self._new_nodes.extend([node.nodeid for node in added_nodes])
+            self.tree_ui.reload_current()
+            self.show_refs()
+            self._modified = True
 
     def set_modified(self):
         self._modified = True
