@@ -222,7 +222,7 @@ class UaModeler(QMainWindow):
     def _show_context_menu_tree(self, position):
         idx = self.ui.treeView.currentIndex()
         if idx.isValid():
-            self._contextMenu.exec_(self.ui.treeView.mapToGlobal(position))
+            self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
     def _delete(self):
         node = self.tree_ui.get_current_node()
