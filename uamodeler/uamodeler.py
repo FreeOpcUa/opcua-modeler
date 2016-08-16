@@ -33,6 +33,7 @@ class NewNodeDialog(QDialog):
         uries = server.get_namespace_array()
         for uri in uries:
             self.nsComboBox.addItem(uri)
+        self.nsComboBox.setCurrentIndex(len(uries)-1)
         layout.addWidget(self.nsComboBox)
 
         self.nameLabel = QLineEdit(self)
