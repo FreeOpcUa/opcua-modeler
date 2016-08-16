@@ -10,6 +10,7 @@ from opcua import ua
 from opcua import Server
 from opcua import copy_node
 from opcua.common.ua_utils import get_node_children
+from opcua.common.xmlexporter import XmlExporter
 
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
@@ -357,11 +358,18 @@ class UaModeler(QMainWindow):
             if not ok:
                 return
         print("Saving to", self._current_path)
-        print("Should export {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
+        print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[1:])
+        exp = XmlExporter(self.server)
+        uris = self.server.get_namespace_array()[1:]
+        exp.build_etree(self._new_nodes, uris=uris)
+        try:
+            exp.write_xml(self._current_path)
+        except Exception as ex:
+            self.show_error(ex)
+            raise
         self._modified = False
         self._update_title()
-        raise NotImplementedError
 
     def really_exit(self):
         if self._modified:
