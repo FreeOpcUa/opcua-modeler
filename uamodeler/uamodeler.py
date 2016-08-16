@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton,
 from opcua import ua
 from opcua import Server
 from opcua import copy_node
+from opcua import Node
 from opcua.common.ua_utils import get_node_children
 from opcua.common.xmlexporter import XmlExporter
 
@@ -231,6 +232,8 @@ class UaModeler(QMainWindow):
             nodes = get_node_children(node)
             for n in nodes:
                 n.delete()
+                if n in self._new_nodes:
+                    self._new_nodes.remove(n)
             self.tree_ui.remove_current_item()
 
     def _copy(self):
@@ -309,7 +312,9 @@ class UaModeler(QMainWindow):
         if not self._close_model():
             return
         self.server = Server()
-        self.server.set_endpoint("opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/")
+        endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
+        print("Starting server on ", endpoint)
+        self.server.set_endpoint(endpoint)
         self.server.set_server_name("OpcUa Modeler Server")
 
         del(self._new_nodes[:])  # empty list while keeping reference
@@ -328,12 +333,14 @@ class UaModeler(QMainWindow):
         if ok:
             try:
                 new_nodes = self.server.import_xml(path)
-                self._new_nodes.extend(new_nodes)
+                self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
                 self._modified = True
                 return path
             except Exception as ex:
                 self.show_error(ex)
                 raise
+            # we maybe should only reload the imported nodes
+            self.tree_ui.reload()
         return None
 
     def _open(self):
