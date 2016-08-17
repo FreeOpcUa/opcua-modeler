@@ -82,7 +82,7 @@ class UaModeler(QMainWindow):
         self.ui.actionNew.setIcon(QIcon(":/new.svg"))
         self.ui.actionOpen.setIcon(QIcon(":/open.svg"))
         self.ui.actionCopy.setIcon(QIcon(":/copy.svg"))
-        self.ui.actionSave.setIcon(QIcon(":/paste.svg"))
+        self.ui.actionPaste.setIcon(QIcon(":/paste.svg"))
         self.ui.actionDelete.setIcon(QIcon(":/delete.svg"))
         self.ui.actionSave.setIcon(QIcon(":/save.svg"))
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
@@ -111,6 +111,7 @@ class UaModeler(QMainWindow):
         self.ui.actionAddFolder.triggered.connect(self._add_folder)
         self.ui.actionAddDataType.triggered.connect(self._add_data_type)
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
+        self.ui.actionAddVariableType.triggered.connect(self._add_variable_type)
         self.ui.actionAddProperty.triggered.connect(self._add_property)
 
         self._disable_actions()
@@ -355,7 +356,6 @@ class UaModeler(QMainWindow):
         if ok:
             new_node = parent.add_variable_type(*args)
             self._after_add(new_node)
-
 
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
