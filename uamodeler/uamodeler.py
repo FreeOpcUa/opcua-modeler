@@ -17,98 +17,9 @@ from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
-from uawidgets.get_node_dialog import GetNodeDialog
+from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
-
-
-class NewNodeDialog(QDialog):
-    def __init__(self, parent, title, server, node_type=None, default_value=None):
-        QDialog.__init__(self, parent)
-        self.setWindowTitle(title)
-
-        layout = QHBoxLayout(self)
-        
-        self.nsComboBox = QComboBox(self)
-        uries = server.get_namespace_array()
-        for uri in uries:
-            self.nsComboBox.addItem(uri)
-        self.nsComboBox.setCurrentIndex(len(uries)-1)
-        layout.addWidget(self.nsComboBox)
-
-        self.nameLabel = QLineEdit(self)
-        self.nameLabel.setText("NoName")
-        layout.addWidget(self.nameLabel)
-
-        self.start_node_type = node_type
-        self.node_type = node_type
-        self._is_variable = False
-
-        if self.node_type is not None:
-            name = self.node_type.get_browse_name().to_string()
-            self.objectTypeButton = QPushButton(name, self)
-            self.objectTypeButton.clicked.connect(self._get_node_type)
-            layout.addWidget(self.objectTypeButton)
-        
-        if default_value is not None:
-            self._is_variable = True
-            self.valLineEdit = QLineEdit(self)
-            self.valLineEdit.setText(str(default_value))
-            layout.addWidget(self.valLineEdit)
-
-            self.vtypeComboBox = QComboBox(self)
-            vtypes = [vt.name for vt in ua.VariantType]
-            for vtype in vtypes:
-                self.vtypeComboBox.addItem(vtype)
-            layout.addWidget(self.vtypeComboBox)
-
-            self.original_data_type = server.get_node(ua.ObjectIds.BaseDataType)
-            self.data_type = self.original_data_type 
-            name = self.data_type.get_browse_name().to_string()
-            self.dataTypeButton = QPushButton(name, self)
-            self.dataTypeButton.clicked.connect(self._get_data_type)
-            layout.addWidget(self.dataTypeButton)
-
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, Qt.Horizontal, self)
-        layout.addWidget(self.buttons)
-
-        self.buttons.accepted.connect(self.accept)
-        self.buttons.rejected.connect(self.reject)
-
-    def _get_data_type(self):
-        node, ok = GetNodeDialog.getNode(self, self.original_data_type)
-        if ok:
-            self.node_type = node
-            self.objectTypeButton.setText(node.get_browse_name().to_string())
-
-    def _get_node_type(self):
-        node, ok = GetNodeDialog.getNode(self, self.start_node_type)
-        if ok:
-            self.node_type = node
-            self.objectTypeButton.setText(node.get_browse_name().to_string())
-
-    def get_args(self):
-        args = []
-        ns = self.nsComboBox.currentIndex()
-        args.append(ns)
-        name = self.nameLabel.text()
-        args.append(name)
-        if self.node_type is not None:
-            args.append(self.node_type)
-        if self._is_variable:
-            args.append(self.valLineEdit.text())
-            args.append(getattr(ua.VariantType, self.vtypeComboBox.currentText()))
-            args.append(self.data_type.nodeid)
-        return args
-
-    @staticmethod
-    def getArgs(parent, title, server, node_type=None, default_value=None):
-        dialog = NewNodeDialog(parent, title, server, node_type=node_type, default_value=default_value)
-        result = dialog.exec_()
-        if result == QDialog.Accepted:
-            return dialog.get_args(), True
-        else:
-            return [], False
 
 
 class BoldDelegate(QStyledItemDelegate):
@@ -398,45 +309,53 @@ class UaModeler(QMainWindow):
 
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Object Type", self.server)
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.server)
         if ok:
             new_node = parent.add_object_type(*args)
             self._after_add(new_node)
 
     def _add_folder(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Folder", self.server)
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.server)
         if ok:
             new_node = parent.add_folder(*args)
             self._after_add(new_node)
 
     def _add_object(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Object", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
+        args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
         if ok:
             new_node = parent.add_object(*args)
             self._after_add(new_node)
 
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Data Type", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseDataType))
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseDataType))
         if ok:
             new_node = parent.add_data_type(*args)
             self._after_add(new_node)
 
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
         if ok:
             new_node = parent.add_variable(*args)
             self._after_add(new_node)
 
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
         if ok:
             new_node = parent.add_property(*args)
             self._after_add(new_node)
+
+    def _add_variable_type(self):
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable Type", self.server, default_value=9.99)
+        if ok:
+            new_node = parent.add_variable_type(*args)
+            self._after_add(new_node)
+
 
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
