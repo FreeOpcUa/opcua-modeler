@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(name="opcua-modeler",
-      version="0.0.1",
+      version="0.1.0",
       description="OPC-UA Address Space Modeler",
       author="Olivier R-D et al.",
       url='https://github.com/FreeOpcUa/opcua-modeler',
