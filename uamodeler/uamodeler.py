@@ -248,12 +248,13 @@ class UaModeler(QMainWindow):
                 new_nodes = self.server.import_xml(path)
                 self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
                 self._modified = True
-                return path
             except Exception as ex:
                 self.show_error(ex)
                 raise
             # we maybe should only reload the imported nodes
             self.tree_ui.reload()
+            self.idx_ui.reload()
+            return path
         return None
 
     def _open(self):
