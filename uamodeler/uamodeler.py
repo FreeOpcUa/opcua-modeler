@@ -284,6 +284,7 @@ class UaModeler(QMainWindow):
         exp = XmlExporter(self.server)
         uris = self.server.get_namespace_array()[1:]
         exp.build_etree(self._new_nodes, uris=uris)
+        exp.dump_etree()  #debug
         try:
             exp.write_xml(self._current_path)
         except Exception as ex:
