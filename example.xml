@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<UANodeSet xmlns="http://opcfoundation.org/UA/2011/03/UANodeSet.xsd" xmlns:uax="http://opcfoundation.org/UA/2008/02/Types.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <NamespaceUris>
+        <Uri>urn:freeopcua:python:server</Uri>
+        <Uri>urx:mycompany:myproject</Uri>
+    </NamespaceUris>
+    <Aliases>
+        <Alias Alias="HasTypeDefinition">i=63</Alias>
+        <Alias Alias="HasProperty">ns=1;i=2004</Alias>
+        <Alias Alias="HasSubtype">i=58</Alias>
+        <Alias Alias="Float">i=10</Alias>
+        <Alias Alias="HasComponent">ns=1;i=2001</Alias>
+        <Alias Alias="String">i=12</Alias>
+        <Alias Alias="Organizes">i=85</Alias>
+    </Aliases>
+    <UAObject BrowseName="0:fold1" NodeId="ns=1;i=2004" ParentNodeId="i=85">
+        <DisplayName>BaseObjectType</DisplayName>
+        <References>
+            <Reference IsForward="false" ReferenceType="Organizes">i=85</Reference>
+            <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=58</Reference>
+            <Reference IsForward="true" ReferenceType="HasComponent">ns=1;i=2005</Reference>
+            <Reference IsForward="true" ReferenceType="HasProperty">ns=1;i=2006</Reference>
+        </References>
+    </UAObject>
+    <UAObjectType BrowseName="1:MyDevice" NodeId="ns=1;i=2001" ParentNodeId="i=58">
+        <DisplayName>MyDevice</DisplayName>
+        <References>
+            <Reference IsForward="false" ReferenceType="HasSubtype">i=58</Reference>
+            <Reference IsForward="true" ReferenceType="HasComponent">ns=1;i=2002</Reference>
+        </References>
+    </UAObjectType>
+    <UAVariable AccessLevel="1" BrowseName="1:var1" DataType="Float" NodeId="ns=1;i=2005" ParentNodeId="ns=1;i=2004" UserAccessLevel="1">
+        <DisplayName>var1</DisplayName>
+        <Value>
+            <uax:Float>9.99</uax:Float>
+        </Value>
+        <References>
+            <Reference IsForward="false" ReferenceType="HasComponent">ns=1;i=2004</Reference>
+            <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=63</Reference>
+        </References>
+    </UAVariable>
+    <UAVariable AccessLevel="1" BrowseName="1:prop1" DataType="String" NodeId="ns=1;i=2006" ParentNodeId="ns=1;i=2004" UserAccessLevel="1">
+        <DisplayName>prop1</DisplayName>
+        <Value>
+            <uax:String>titi</uax:String>
+        </Value>
+        <References>
+            <Reference IsForward="false" ReferenceType="HasProperty">ns=1;i=2004</Reference>
+            <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=68</Reference>
+        </References>
+    </UAVariable>
+    <UAVariable AccessLevel="1" BrowseName="1:DeviceName" DataType="String" NodeId="ns=1;i=2002" ParentNodeId="ns=1;i=2001" UserAccessLevel="1">
+        <DisplayName>DeviceName</DisplayName>
+        <Value>
+            <uax:String>MyName</uax:String>
+        </Value>
+        <References>
+            <Reference IsForward="false" ReferenceType="HasComponent">ns=1;i=2001</Reference>
+            <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=63</Reference>
+        </References>
+    </UAVariable>
+</UANodeSet>
