@@ -393,6 +393,8 @@ class UaModeler(QMainWindow):
         if not self._close_model():
             event.ignore()
             return
+        self.attrs_ui.save_state()
+        self.refs_ui.save_state()
         self.settings.setValue("main_window_width", self.size().width())
         self.settings.setValue("main_window_height", self.size().height())
         self.settings.setValue("main_window_state", self.saveState())
