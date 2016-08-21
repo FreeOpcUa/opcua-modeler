@@ -175,6 +175,7 @@
    <addaction name="actionAddObject"/>
    <addaction name="actionAddVariable"/>
    <addaction name="actionAddProperty"/>
+   <addaction name="actionAddMethod"/>
    <addaction name="actionAddObjectType"/>
    <addaction name="actionAddDataType"/>
    <addaction name="actionAddVariableType"/>
@@ -285,6 +286,19 @@
   <action name="actionInstantiate">
    <property name="text">
     <string>Instantiate</string>
+   </property>
+  </action>
+  <action name="actionAddMethod">
+   <property name="text">
+    <string>Add Method</string>
+   </property>
+  </action>
+  <action name="actionAddEnum">
+   <property name="text">
+    <string>Add Enum Type</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Enum Type</string>
    </property>
   </action>
  </widget>

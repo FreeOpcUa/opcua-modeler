@@ -17,7 +17,7 @@ from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
-from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog
+from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 
@@ -87,6 +87,7 @@ class UaModeler(QMainWindow):
         self.ui.actionSave.setIcon(QIcon(":/save.svg"))
         self.ui.actionAddFolder.setIcon(QIcon(":/folder.svg"))
         self.ui.actionAddObject.setIcon(QIcon(":/object.svg"))
+        self.ui.actionAddMethod.setIcon(QIcon(":/method.svg"))
         self.ui.actionAddObjectType.setIcon(QIcon(":/object_type.svg"))
         self.ui.actionAddProperty.setIcon(QIcon(":/property.svg"))
         self.ui.actionAddVariable.setIcon(QIcon(":/variable.svg"))
@@ -109,6 +110,7 @@ class UaModeler(QMainWindow):
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
         self.ui.actionAddFolder.triggered.connect(self._add_folder)
+        self.ui.actionAddMethod.triggered.connect(self._add_method)
         self.ui.actionAddDataType.triggered.connect(self._add_data_type)
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
         self.ui.actionAddVariableType.triggered.connect(self._add_variable_type)
@@ -130,6 +132,7 @@ class UaModeler(QMainWindow):
         self._contextMenu.addAction(self.ui.actionAddObject)
         self._contextMenu.addAction(self.ui.actionAddVariable)
         self._contextMenu.addAction(self.ui.actionAddProperty)
+        self._contextMenu.addAction(self.ui.actionAddMethod)
         self._contextMenu.addAction(self.ui.actionAddObjectType)
         self._contextMenu.addAction(self.ui.actionAddVariableType)
         self._contextMenu.addAction(self.ui.actionAddDataType)
@@ -280,7 +283,7 @@ class UaModeler(QMainWindow):
                 return
         print("Saving to", self._current_path)
         print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
-        print("and namespaces: ", self.server.get_namespace_array()[1:])
+        print("and namespaces: ", self.server.get_namespace_array()[2:])
         exp = XmlExporter(self.server)
         uris = self.server.get_namespace_array()[1:]
         exp.build_etree(self._new_nodes, uris=uris)
@@ -309,6 +312,13 @@ class UaModeler(QMainWindow):
         self.tree_ui.reload_current()
         self.show_refs()
         self._modified = True
+
+    def _add_method(self):
+        parent = self.tree_ui.get_current_node()
+        args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
+        if ok:
+            new_node = parent.add_method(*args)
+            self._after_add(new_node)
 
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
