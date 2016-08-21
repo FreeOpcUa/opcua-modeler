@@ -1,8 +1,8 @@
 Free OPC UA Modeler
 
-Python OPC UA address space buidler. This can be used to create OPC UA address spaces in XML format for import to Free OPC UA Server.
+OPC UA address space builder. This can be used to create OPC UA address spaces in XML format for import to OPC UA Servers. XML format is the one used by OPC UA specification, it should therefor be possible to import the produced XML using any SDK.
 
-This is a work in progress 
+This is a work in progress but it is starting to be usable. Bug reports and feature requests are welcome.
 
 Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-modeler/issues/3
 
