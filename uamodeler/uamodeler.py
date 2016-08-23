@@ -340,14 +340,14 @@ class UaModeler(QMainWindow):
 
     def _add_object(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
+        args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
         if ok:
             new_node = parent.add_object(*args)
             self._after_add(new_node)
 
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server, node_type=self.server.get_node(ua.ObjectIds.BaseDataType))
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server)
         if ok:
             new_node = parent.add_data_type(*args)
             self._after_add(new_node)
