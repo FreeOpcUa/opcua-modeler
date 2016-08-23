@@ -5,13 +5,13 @@
         <Uri>urx:mycompany:myproject</Uri>
     </NamespaceUris>
     <Aliases>
-        <Alias Alias="HasTypeDefinition">i=63</Alias>
-        <Alias Alias="Organizes">i=85</Alias>
-        <Alias Alias="HasComponent">ns=1;i=2001</Alias>
-        <Alias Alias="HasProperty">ns=1;i=2004</Alias>
-        <Alias Alias="HasSubtype">i=58</Alias>
+        <Alias Alias="HasComponent">ns=1;i=2004</Alias>
         <Alias Alias="Float">i=10</Alias>
+        <Alias Alias="HasSubtype">i=58</Alias>
+        <Alias Alias="HasTypeDefinition">i=63</Alias>
         <Alias Alias="String">i=12</Alias>
+        <Alias Alias="Organizes">i=85</Alias>
+        <Alias Alias="HasProperty">ns=1;i=2004</Alias>
     </Aliases>
     <UAObjectType BrowseName="1:MyDevice" IsAbstract="false" NodeId="ns=1;i=2001" ParentNodeId="i=58">
         <DisplayName>MyDevice</DisplayName>
@@ -27,12 +27,13 @@
             <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=58</Reference>
             <Reference IsForward="true" ReferenceType="HasComponent">ns=1;i=2005</Reference>
             <Reference IsForward="true" ReferenceType="HasProperty">ns=1;i=2006</Reference>
+            <Reference IsForward="true" ReferenceType="HasComponent">ns=1;i=2003</Reference>
         </References>
     </UAObject>
     <UAVariable AccessLevel="0" BrowseName="1:var1" DataType="Float" NodeId="ns=1;i=2005" ParentNodeId="ns=1;i=2004" UserAccessLevel="0" ValueRank="-1">
         <DisplayName>var1</DisplayName>
         <Value>
-            <Float xmnls="http://opcfoundation.org/UA/2008/02/Types.xsd">9.99</Float>
+            <uax:Float>9.99</uax:Float>
         </Value>
         <References>
             <Reference IsForward="false" ReferenceType="HasComponent">ns=1;i=2004</Reference>
@@ -42,7 +43,7 @@
     <UAVariable AccessLevel="0" BrowseName="1:myproperty" DataType="String" NodeId="ns=1;i=2006" ParentNodeId="ns=1;i=2004" UserAccessLevel="0" ValueRank="-1">
         <DisplayName>MyProperty</DisplayName>
         <Value>
-            <String xmnls="http://opcfoundation.org/UA/2008/02/Types.xsd">property_value</String>
+            <uax:String>property_value</uax:String>
         </Value>
         <References>
             <Reference IsForward="false" ReferenceType="HasProperty">ns=1;i=2004</Reference>
@@ -52,10 +53,24 @@
     <UAVariable AccessLevel="0" BrowseName="1:DeviceName" DataType="String" NodeId="ns=1;i=2002" ParentNodeId="ns=1;i=2001" UserAccessLevel="0" ValueRank="-1">
         <DisplayName>DeviceName</DisplayName>
         <Value>
-            <String xmnls="http://opcfoundation.org/UA/2008/02/Types.xsd">MyName</String>
+            <uax:String>MyName</uax:String>
         </Value>
         <References>
             <Reference IsForward="false" ReferenceType="HasComponent">ns=1;i=2001</Reference>
+            <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=63</Reference>
+        </References>
+    </UAVariable>
+    <UAVariable BrowseName="1:varList" DataType="String" Description="b'varList'" NodeId="ns=1;i=2003" ParentNodeId="ns=1;i=2004" ValueRank="-1">
+        <DisplayName>varList</DisplayName>
+        <Value>
+            <uax:ListOfString>
+                <uax:String>en</uax:String>
+                <uax:String>to</uax:String>
+                <uax:String>tre</uax:String>
+            </uax:ListOfString>
+        </Value>
+        <References>
+            <Reference IsForward="false" ReferenceType="HasComponent">ns=1;i=2004</Reference>
             <Reference IsForward="true" ReferenceType="HasTypeDefinition">i=63</Reference>
         </References>
     </UAVariable>

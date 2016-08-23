@@ -246,26 +246,29 @@ class UaModeler(QMainWindow):
 
     def _import(self):
         path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)")
-        if ok:
-            try:
-                new_nodes = self.server.import_xml(path)
-                self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
-                self._modified = True
-            except Exception as ex:
-                self.show_error(ex)
-                raise
-            # we maybe should only reload the imported nodes
-            self.tree_ui.reload()
-            self.idx_ui.reload()
-            return path
-        return None
+        if not ok:
+            return None
+        try:
+            new_nodes = self.server.import_xml(path)
+            self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
+            self._modified = True
+        except Exception as ex:
+            self.show_error(ex)
+            raise
+        # we maybe should only reload the imported nodes
+        self.tree_ui.reload()
+        self.idx_ui.reload()
+        return path
 
     def _open(self):
         if self._new():
             path = self._import()
-            self._modified = False
-            self._current_path = path
-            self._update_title()
+            if path:
+                self._modified = False
+                self._current_path = path
+                self._update_title()
+            else:
+                self._close_model()
 
     def _save_as(self):
         path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
@@ -295,6 +298,7 @@ class UaModeler(QMainWindow):
             raise
         self._modified = False
         self._update_title()
+        self.show_msg(self._current_path + " saved")
 
     def really_exit(self):
         if self._modified:
@@ -350,14 +354,22 @@ class UaModeler(QMainWindow):
 
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
+        try:
+            args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
+        except Exception as ex:
+            self.show_error(ex)
+            raise
         if ok:
             new_node = parent.add_variable(*args)
             self._after_add(new_node)
 
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
+        try:
+            args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
+        except Exception as ex:
+            self.show_error(ex)
+            raise
         if ok:
             new_node = parent.add_property(*args)
             self._after_add(new_node)
@@ -385,6 +397,13 @@ class UaModeler(QMainWindow):
         self.ui.statusBar.setStyleSheet("QStatusBar { background-color : red; color : black; }")
         self.ui.statusBar.showMessage(str(msg))
         QTimer.singleShot(1500, self.ui.statusBar.hide)
+
+    def show_msg(self, msg):
+        self.ui.statusBar.show()
+        self.ui.statusBar.setStyleSheet("QStatusBar { background-color : green; color : black; }")
+        self.ui.statusBar.showMessage(str(msg))
+        QTimer.singleShot(1500, self.ui.statusBar.hide)
+
 
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
