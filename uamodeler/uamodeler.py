@@ -68,7 +68,7 @@ class UaModeler(QMainWindow):
 
         self.refs_ui = RefsWidget(self.ui.refView)
         self.refs_ui.error.connect(self.show_error)
-        self.attrs_ui = AttrsWidget(self.ui.attrView)
+        self.attrs_ui = AttrsWidget(self.ui.attrView, show_timestamps=False)
         self.attrs_ui.error.connect(self.show_error)
         self.attrs_ui.modified.connect(self.set_modified)
         self.idx_ui = NamespaceWidget(self.ui.namespaceView)
