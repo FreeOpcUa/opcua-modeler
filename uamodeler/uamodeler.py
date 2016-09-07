@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
+import os
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon, QFont
@@ -52,6 +53,7 @@ class UaModeler(QMainWindow):
         QCoreApplication.setOrganizationName("FreeOpcUa")
         QCoreApplication.setApplicationName("OpcUaModeler")
         self.settings = QSettings()
+        self._last_dir = self.settings.value("last_dir", ".")
 
         self._restore_state()
 
@@ -245,9 +247,10 @@ class UaModeler(QMainWindow):
         return True
 
     def _import(self):
-        path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)")
+        path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_dir)
         if not ok:
             return None
+        self._last_dir = os.path.dirname(path)
         try:
             new_nodes = self.server.import_xml(path)
             self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
@@ -414,6 +417,7 @@ class UaModeler(QMainWindow):
             return
         self.attrs_ui.save_state()
         self.refs_ui.save_state()
+        self.settings.setValue("last_dir", self._last_dir)
         self.settings.setValue("main_window_width", self.size().width())
         self.settings.setValue("main_window_height", self.size().height())
         self.settings.setValue("main_window_state", self.saveState())
