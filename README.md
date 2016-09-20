@@ -11,6 +11,6 @@ Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-mo
 
 # How to install
 
-1. `apt-get -y install python-pip`
+1. Make sure python and python-pip is installed
 2. `pip3 install opcua-modeler`
 4. Run with: `opcua-modeler`
