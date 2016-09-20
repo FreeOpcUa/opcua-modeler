@@ -179,10 +179,10 @@ class UaModeler(QMainWindow):
         self.resize(int(self.settings.value("main_window_width", 800)),
                     int(self.settings.value("main_window_height", 600)))
         #self.restoreState(self.settings.value("main_window_state", b"", type="QByteArray"))
-        self.restoreState(self.settings.value("main_window_state", b""))
-        self.ui.splitterLeft.restoreState(self.settings.value("splitter_left", b""))
-        self.ui.splitterRight.restoreState(self.settings.value("splitter_right", b""))
-        self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", b""))
+        self.restoreState(self.settings.value("main_window_state", bytearray()))
+        self.ui.splitterLeft.restoreState(self.settings.value("splitter_left", bytearray()))
+        self.ui.splitterRight.restoreState(self.settings.value("splitter_right", bytearray()))
+        self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", bytearray()))
 
     def _disable_actions(self):
         self.ui.actionImport.setEnabled(False)
