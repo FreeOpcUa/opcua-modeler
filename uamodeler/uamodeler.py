@@ -281,7 +281,6 @@ class UaModeler(QMainWindow):
             self._save()
 
     def _save(self):
-        print("CURRENT", self._current_path)
         if not self._current_path or self._current_path == "NoName":
             path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
             self._current_path = path
@@ -291,9 +290,8 @@ class UaModeler(QMainWindow):
         print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
         print("and namespaces: ", self.server.get_namespace_array()[2:])
         exp = XmlExporter(self.server)
-        uris = self.server.get_namespace_array()[1:]
+        uris = self.server.get_namespace_array()[2:]
         exp.build_etree(self._new_nodes, uris=uris)
-        exp.dump_etree()  #debug
         try:
             exp.write_xml(self._current_path)
         except Exception as ex:
