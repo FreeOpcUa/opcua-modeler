@@ -77,4 +77,4 @@ class NamespaceWidget(QObject):
             uri_it = self.model.itemFromIndex(idx.sibling(idx.row(), 2))
             self._namespace_to_delete = uri_it.text()
             self.removeNamespaceAction.setEnabled(True)
-        self._contextMenu.exec_(self.view.mapToGlobal(position))
+        self._contextMenu.exec_(self.view.viewport().mapToGlobal(position))

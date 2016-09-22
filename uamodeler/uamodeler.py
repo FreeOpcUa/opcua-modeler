@@ -21,6 +21,7 @@ from uawidgets.refs_widget import RefsWidget
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
+from uamodeler.refnodesets_widget import RefNodeSetsWidget
 
 
 class BoldDelegate(QStyledItemDelegate):
@@ -74,6 +75,10 @@ class UaModeler(QMainWindow):
         self.attrs_ui.error.connect(self.show_error)
         self.attrs_ui.modified.connect(self.set_modified)
         self.idx_ui = NamespaceWidget(self.ui.namespaceView)
+        self.nodesets_ui = RefNodeSetsWidget(self.ui.refNodeSetsView)
+        self.nodesets_ui.error.connect(self.show_error)
+        self.nodesets_ui.nodeset_added.connect(self.nodesets_change)
+        self.nodesets_ui.nodeset_removed.connect(self.nodesets_change)
 
         self.ui.treeView.activated.connect(self.show_refs)
         self.ui.treeView.clicked.connect(self.show_refs)
@@ -216,6 +221,7 @@ class UaModeler(QMainWindow):
         self.refs_ui.clear()
         self.attrs_ui.clear()
         self.idx_ui.clear()
+        self.nodesets_ui.clear()
         self._current_path = None
         self._update_title()
         if self.server is not None:
@@ -240,6 +246,7 @@ class UaModeler(QMainWindow):
         self.server.start()
         self.tree_ui.set_root_node(self.server.get_root_node())
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
+        self.nodesets_ui.set_server(self.server)
         self._modified = False
         self._enable_actions()
         self._current_path = "NoName"
@@ -405,9 +412,14 @@ class UaModeler(QMainWindow):
         self.ui.statusBar.showMessage(str(msg))
         QTimer.singleShot(1500, self.ui.statusBar.hide)
 
-
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
+    
+    def nodesets_change(self, data):
+        self.idx_ui.reload()
+        self.tree_ui.reload()
+        self.refs_ui.clear()
+        self.attrs_ui.clear()
 
     def closeEvent(self, event):
         if not self._close_model():

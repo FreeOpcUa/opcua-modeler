@@ -27,6 +27,8 @@ class Ui_UaModeler(object):
         self.splitterLeft = QtWidgets.QSplitter(self.splitterCenter)
         self.splitterLeft.setOrientation(QtCore.Qt.Vertical)
         self.splitterLeft.setObjectName("splitterLeft")
+        self.refNodeSetsView = QtWidgets.QTreeView(self.splitterLeft)
+        self.refNodeSetsView.setObjectName("refNodeSetsView")
         self.namespaceView = QtWidgets.QTreeView(self.splitterLeft)
         self.namespaceView.setObjectName("namespaceView")
         self.treeView = QtWidgets.QTreeView(self.splitterLeft)

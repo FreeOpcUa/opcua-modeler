@@ -28,6 +28,7 @@
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
+       <widget class="QTreeView" name="refNodeSetsView"/>
        <widget class="QTreeView" name="namespaceView"/>
        <widget class="QTreeView" name="treeView">
         <property name="sizePolicy">
