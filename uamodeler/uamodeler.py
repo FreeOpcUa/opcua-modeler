@@ -240,6 +240,11 @@ class UaModeler(QMainWindow):
         print("Starting server on ", endpoint)
         self.server.set_endpoint(endpoint)
         self.server.set_server_name("OpcUa Modeler Server")
+        # now remove freeopcua namespace, not necessary when modeling and
+        # ensures correct idx for exported nodesets
+        ns_node = self.server.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
+        nss = ns_node.get_value()
+        ns_node.set_value(nss[1:])
 
         del(self._new_nodes[:])  # empty list while keeping reference
 
