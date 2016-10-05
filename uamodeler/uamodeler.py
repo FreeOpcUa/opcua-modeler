@@ -324,8 +324,9 @@ class UaModeler(QMainWindow):
 
         return True
 
-    def _after_add(self, new_node):
-        self._new_nodes.append(new_node)
+    def _after_add(self, new_nodes):
+        for new_node in new_nodes:
+            self._new_nodes.append(new_node)
         self.tree_ui.reload_current()
         self.show_refs()
         self._modified = True
@@ -334,8 +335,11 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
         if ok:
+            new_nodes = []
             new_node = parent.add_method(*args)
-            self._after_add(new_node)
+            new_nodes.append(new_node)
+            new_nodes.extend(new_node.get_children())
+            self._after_add(new_nodes)
 
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
