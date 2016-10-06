@@ -325,7 +325,10 @@ class UaModeler(QMainWindow):
         return True
 
     def _after_add(self, new_nodes):
-        self._new_nodes.extend(new_nodes)
+        if type(new_nodes) in (list, tuple,):
+            self._new_nodes.extend(new_nodes)
+        else:
+            self._new_nodes.append(new_nodes)
         self.tree_ui.reload_current()
         self.show_refs()
         self._modified = True
