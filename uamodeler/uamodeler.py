@@ -300,9 +300,9 @@ class UaModeler(QMainWindow):
                 return
         print("Saving to", self._current_path)
         print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
-        print("and namespaces: ", self.server.get_namespace_array()[2:])
+        print("and namespaces: ", self.server.get_namespace_array()[1:])
         exp = XmlExporter(self.server)
-        uris = self.server.get_namespace_array()[2:]
+        uris = self.server.get_namespace_array()[1:]
         exp.build_etree(self._new_nodes, uris=uris)
         try:
             exp.write_xml(self._current_path)
@@ -324,11 +324,12 @@ class UaModeler(QMainWindow):
 
         return True
 
-    def _after_add(self, new_nodes):
-        if type(new_nodes) in (list, tuple,):
-            self._new_nodes.extend(new_nodes)
-        else:
-            self._new_nodes.append(new_nodes)
+    def _after_add(self, new_node):
+        self._new_nodes.extend(get_node_children(new_node))
+        # if type(new_nodes) in (list, tuple,):
+        #     self._new_nodes.extend(new_nodes)
+        # else:
+        #     self._new_nodes.append(new_nodes)
         self.tree_ui.reload_current()
         self.show_refs()
         self._modified = True
@@ -337,11 +338,8 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
         if ok:
-            new_nodes = []
             new_node = parent.add_method(*args)
-            new_nodes.append(new_node)
-            new_nodes.extend(new_node.get_children())
-            self._after_add(new_nodes)
+            self._after_add(new_node)
 
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
