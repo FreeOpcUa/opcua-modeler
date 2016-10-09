@@ -301,9 +301,9 @@ class UaModeler(QMainWindow):
                 return
         print("Saving to", self._current_path)
         print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
-        print("and namespaces: ", self.server.get_namespace_array()[2:])
+        print("and namespaces: ", self.server.get_namespace_array()[1:])
         exp = XmlExporter(self.server)
-        uris = self.server.get_namespace_array()[2:]
+        uris = self.server.get_namespace_array()[1:]
         exp.build_etree(self._new_nodes, uris=uris)
         try:
             exp.write_xml(self._current_path)
@@ -316,10 +316,12 @@ class UaModeler(QMainWindow):
 
     def really_exit(self):
         if self._modified:
-            reply = QMessageBox.question(self, 
-                                         "OPC UA Modeler",
-                                         "Model is modified, do you really want to close model?",
-                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            reply = QMessageBox.question(
+                self,
+                "OPC UA Modeler",
+                "Model is modified, do you really want to close model?",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+            )
             if reply != QMessageBox.Yes:
                 return False
 
