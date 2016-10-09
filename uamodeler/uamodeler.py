@@ -5,7 +5,7 @@ import os
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QPushButton, QComboBox, QLabel, QLineEdit, QHBoxLayout, QDialog, QDialogButtonBox, QMessageBox, QStyledItemDelegate, QMenu
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QStyledItemDelegate, QMenu
 
 from opcua import ua
 from opcua import Server
@@ -13,6 +13,7 @@ from opcua import copy_node
 from opcua import Node
 from opcua.common.ua_utils import get_node_children
 from opcua.common.xmlexporter import XmlExporter
+from opcua.common.instantiate import instantiate
 
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
@@ -325,7 +326,7 @@ class UaModeler(QMainWindow):
         return True
 
     def _after_add(self, new_nodes):
-        if type(new_nodes) in (list, tuple,):
+        if isinstance(new_nodes, (list, tuple)):
             self._new_nodes.extend(new_nodes)
         else:
             self._new_nodes.append(new_nodes)
@@ -361,8 +362,9 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
         if ok:
-            new_node = parent.add_object(*args)
-            self._after_add(new_node)
+            nodeid, bname, otype = args
+            new_nodes = instantiate(parent, otype, bname=bname, nodeid=nodeid)
+            self._after_add(new_nodes)
 
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
@@ -395,9 +397,11 @@ class UaModeler(QMainWindow):
 
     def _add_variable_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable Type", self.server, default_value=9.99)
+        args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseVariableType))
         if ok:
-            new_node = parent.add_variable_type(*args)
+            nodeid, bname, datatype = args
+            new_node = parent.add_variable_type(nodeid, bname, datatype.nodeid)
+            print("NEW TYPE", new_node)
             self._after_add(new_node)
 
     def show_refs(self, idx=None):
