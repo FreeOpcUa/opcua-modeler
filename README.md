@@ -22,10 +22,9 @@ Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-mo
   
 ### Windows:  
 
-1. Install Python 3.5 from https://www.python.org/  
-2. Install PyQT 5 from https://sourceforge.net/projects/pyqt/files/PyQt5/ (or use `pip install PyQt5`)  
-3. Use pip to install opcua-modeler: `pip install opcua-modeler`  
-4. Run via the script pip created: `C:\Users\username\AppData\Local\Programs\Python\Python35-32\Scripts\opcua-modeler.exe`  
+1. Install winpython https://winpython.github.io/  
+2. Use pip to install opcua-modeler: `pip install opcua-modeler`  
+3. Run via the script pip created: `YOUR_INSTALL_PATH\Python\Python35Python\Python35-32\Scripts\opcua-modeler.exe`  
 
 To update to the latest release run: `pip install opcua-modeler --upgrade`
 
