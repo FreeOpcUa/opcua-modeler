@@ -74,7 +74,7 @@ class UaModeler(QMainWindow):
         self.refs_ui.error.connect(self.show_error)
         self.attrs_ui = AttrsWidget(self.ui.attrView, show_timestamps=False)
         self.attrs_ui.error.connect(self.show_error)
-        self.attrs_ui.modified.connect(self.set_modified)
+        self.attrs_ui.attr_written.connect(self._attr_written)
         self.idx_ui = NamespaceWidget(self.ui.namespaceView)
         self.nodesets_ui = RefNodeSetsWidget(self.ui.refNodeSetsView)
         self.nodesets_ui.error.connect(self.show_error)
@@ -178,9 +178,13 @@ class UaModeler(QMainWindow):
             self.show_refs()
             self._modified = True
 
-    def set_modified(self):
+    def _attr_written(self, attr, dv):
         self._modified = True
-
+        if attr == ua.AttributeIds.BrowseName:
+            self.tree_ui.update_browse_name_current_item(dv.Value.Value)
+        elif attr == ua.AttributeIds.DisplayName:
+            self.tree_ui.update_display_name_current_item(dv.Value.Value)
+      
     def _restore_state(self):
         self.resize(int(self.settings.value("main_window_width", 800)),
                     int(self.settings.value("main_window_height", 600)))
@@ -403,7 +407,6 @@ class UaModeler(QMainWindow):
         if ok:
             nodeid, bname, datatype = args
             new_node = parent.add_variable_type(nodeid, bname, datatype.nodeid)
-            print("NEW TYPE", new_node)
             self._after_add(new_node)
 
     def show_refs(self, idx=None):
