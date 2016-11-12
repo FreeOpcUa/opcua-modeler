@@ -2,6 +2,8 @@
 
 import sys
 import os
+import inspect
+import logging
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtGui import QIcon, QFont
@@ -10,7 +12,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox,
 from opcua import ua
 from opcua import Server
 from opcua import copy_node
-from opcua import Node
 from opcua.common.ua_utils import get_node_children
 from opcua.common.xmlexporter import XmlExporter
 from opcua.common.instantiate import instantiate
@@ -23,6 +24,8 @@ from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, New
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
+
+logger = logging.getLogger(__name__)
 
 
 class BoldDelegate(QStyledItemDelegate):
@@ -38,6 +41,21 @@ class BoldDelegate(QStyledItemDelegate):
         if item and item.data() in self.added_node_list:
             option.font.setWeight(QFont.Bold)
         QStyledItemDelegate.paint(self, painter, option, idx)
+
+
+def trycatchslot(func):
+    def wrapper(self, *args):
+        # filter out excess args as qt signals do
+        sig = inspect.signature(func)
+        args = args[:(len(sig.parameters)-1)]
+        result = None
+        try:
+            result = func(self, *args)
+        except Exception as ex:
+            logger.exception(ex)
+            self.show_error(ex)
+        return result
+    return wrapper
 
 
 class UaModeler(QMainWindow):
@@ -340,6 +358,7 @@ class UaModeler(QMainWindow):
         self.show_refs()
         self._modified = True
 
+    @trycatchslot
     def _add_method(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
@@ -350,6 +369,7 @@ class UaModeler(QMainWindow):
             new_nodes.extend(new_node.get_children())
             self._after_add(new_nodes)
 
+    @trycatchslot
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.server)
@@ -357,6 +377,7 @@ class UaModeler(QMainWindow):
             new_node = parent.add_object_type(*args)
             self._after_add(new_node)
 
+    @trycatchslot
     def _add_folder(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.server)
@@ -364,6 +385,7 @@ class UaModeler(QMainWindow):
             new_node = parent.add_folder(*args)
             self._after_add(new_node)
 
+    @trycatchslot
     def _add_object(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
@@ -372,35 +394,31 @@ class UaModeler(QMainWindow):
             new_nodes = instantiate(parent, otype, bname=bname, nodeid=nodeid)
             self._after_add(new_nodes)
 
+    @trycatchslot
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server)
         if ok:
             new_node = parent.add_data_type(*args)
             self._after_add(new_node)
-
+    
+    @trycatchslot
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
-        try:
-            args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
-        except Exception as ex:
-            self.show_error(ex)
-            raise
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
         if ok:
             new_node = parent.add_variable(*args)
             self._after_add(new_node)
 
+    @trycatchslot
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
-        try:
-            args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
-        except Exception as ex:
-            self.show_error(ex)
-            raise
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
         if ok:
             new_node = parent.add_property(*args)
             self._after_add(new_node)
 
+    @trycatchslot
     def _add_variable_type(self):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseVariableType))
@@ -409,18 +427,20 @@ class UaModeler(QMainWindow):
             new_node = parent.add_variable_type(nodeid, bname, datatype.nodeid)
             self._after_add(new_node)
 
+    @trycatchslot
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
         self.refs_ui.show_refs(node)
 
+    @trycatchslot
     def show_attrs(self, idx=None):
         if not isinstance(idx, QModelIndex):
             idx = None
         node = self.get_current_node(idx)
         self.attrs_ui.show_attrs(node)
 
-    def show_error(self, msg, level=1):
-        print("showing error: ", msg, level)
+    def show_error(self, msg):
+        logger.warning("showing error: %s", msg)
         self.ui.statusBar.show()
         self.ui.statusBar.setStyleSheet("QStatusBar { background-color : red; color : black; }")
         self.ui.statusBar.showMessage(str(msg))
