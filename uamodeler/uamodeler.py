@@ -87,6 +87,7 @@ class UaModeler(QMainWindow):
         self.tree_ui.error.connect(self.show_error)
         delegate = BoldDelegate(self, self.tree_ui.model, self._new_nodes)
         self.ui.treeView.setItemDelegate(delegate)
+        self.ui.treeView.selectionModel().currentChanged.connect(self._update_actions_state)
 
         self.refs_ui = RefsWidget(self.ui.refView)
         self.refs_ui.error.connect(self.show_error)
@@ -144,6 +145,44 @@ class UaModeler(QMainWindow):
 
         self._disable_actions()
 
+    def _update_actions_state(self, current, previous):
+        node = self.tree_ui.get_current_node(current)
+        if not node or node == self.server.nodes.root:
+            self._disable_add_actions()
+            return
+        path = node.get_path()
+        nodeclass = node.get_node_class()
+        print("PATH", path, nodeclass)
+
+        if self.server.nodes.base_object_type in path:
+            self.ui.actionAddObjectType.setEnabled(True)
+        else:
+            self.ui.actionAddObjectType.setEnabled(False)
+
+        if self.server.nodes.base_variable_type in path:
+            self.ui.actionAddVariableType.setEnabled(True)
+        else:
+            self.ui.actionAddVariableType.setEnabled(False)
+
+        if self.server.nodes.base_data_type in path:
+            self.ui.actionAddDataType.setEnabled(True)
+            return  # not other nodes should be added here
+        else:
+            self.ui.actionAddDataType.setEnabled(False)
+
+        if nodeclass != ua.NodeClass.Variable:
+            self.ui.actionAddFolder.setEnabled(True)
+            self.ui.actionAddObject.setEnabled(True)
+            self.ui.actionAddVariable.setEnabled(True)
+            self.ui.actionAddProperty.setEnabled(True)
+            self.ui.actionAddMethod.setEnabled(True)
+        else:
+            self.ui.actionAddFolder.setEnabled(False)
+            self.ui.actionAddObject.setEnabled(False)
+            self.ui.actionAddVariable.setEnabled(False)
+            self.ui.actionAddProperty.setEnabled(False)
+            self.ui.actionAddMethod.setEnabled(False)
+
     def setup_context_menu_tree(self):
         self.ui.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.treeView.customContextMenuRequested.connect(self._show_context_menu_tree)
@@ -164,8 +203,8 @@ class UaModeler(QMainWindow):
         self._contextMenu.addAction(self.ui.actionAddDataType)
 
     def _show_context_menu_tree(self, position):
-        idx = self.ui.treeView.currentIndex()
-        if idx.isValid():
+        node = self.tree_ui.get_current_node()
+        if node:
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
     def _delete(self):
@@ -212,10 +251,16 @@ class UaModeler(QMainWindow):
         self.ui.splitterRight.restoreState(self.settings.value("splitter_right", bytearray()))
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", bytearray()))
 
-    def _disable_actions(self):
+    def _disable_model_actions(self):
         self.ui.actionImport.setEnabled(False)
         self.ui.actionSave.setEnabled(False)
         self.ui.actionSaveAs.setEnabled(False)
+
+    def _disable_actions(self):
+        self._disable_add_actions()
+        self._disable_model_actions()
+
+    def _disable_add_actions(self):
         self.ui.actionAddObject.setEnabled(False)
         self.ui.actionAddFolder.setEnabled(False)
         self.ui.actionAddVariable.setEnabled(False)
@@ -223,18 +268,19 @@ class UaModeler(QMainWindow):
         self.ui.actionAddDataType.setEnabled(False)
         self.ui.actionAddVariableType.setEnabled(False)
         self.ui.actionAddObjectType.setEnabled(False)
+        self.ui.actionAddMethod.setEnabled(False)
 
-    def _enable_actions(self):
+    def _enable_model_actions(self):
         self.ui.actionImport.setEnabled(True)
         self.ui.actionSave.setEnabled(True)
         self.ui.actionSaveAs.setEnabled(True)
-        self.ui.actionAddObject.setEnabled(True)
-        self.ui.actionAddFolder.setEnabled(True)
-        self.ui.actionAddVariable.setEnabled(True)
-        self.ui.actionAddProperty.setEnabled(True)
-        self.ui.actionAddDataType.setEnabled(True)
-        self.ui.actionAddVariableType.setEnabled(True)
-        self.ui.actionAddObjectType.setEnabled(True)
+        #self.ui.actionAddObject.setEnabled(True)
+        #self.ui.actionAddFolder.setEnabled(True)
+        #self.ui.actionAddVariable.setEnabled(True)
+        #self.ui.actionAddProperty.setEnabled(True)
+        #self.ui.actionAddDataType.setEnabled(True)
+        #self.ui.actionAddVariableType.setEnabled(True)
+        #self.ui.actionAddObjectType.setEnabled(True)
 
     def _close_model(self):
         if not self.really_exit():
@@ -276,7 +322,7 @@ class UaModeler(QMainWindow):
         self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
         self.nodesets_ui.set_server(self.server)
         self._modified = False
-        self._enable_actions()
+        self._enable_model_actions()
         self._current_path = "NoName"
         self._update_title()
         return True
