@@ -32,5 +32,5 @@ To update to the latest release run: `pip install opcua-modeler --upgrade`
 1. Clone python-opcua and set python to include the opcua directory. for ex: export PYTHONPATH=~/python-opcua/
 2. Clone opcua-modeler
 3. Cone opcua-widgets as uawidgets in opcua-modeler directory
-4. type 'python3 app.pyæ or 'make run'
+4. type 'python3 app.py' or 'make run'
 
