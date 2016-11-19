@@ -1,6 +1,11 @@
 
 import unittest
 import sys
+print("SYS:PATH", sys.path)
+sys.path.insert(0, "python-opcua")
+sys.path.insert(0, "opcua-widgets")
+import os
+print("PWD", os.getcwd())
 
 from opcua import ua
 
