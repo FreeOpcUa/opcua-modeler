@@ -152,7 +152,6 @@ class UaModeler(QMainWindow):
             return
         path = node.get_path()
         nodeclass = node.get_node_class()
-        print("PATH", path, nodeclass)
 
         if self.server.nodes.base_object_type in path:
             self.ui.actionAddObjectType.setEnabled(True)
@@ -451,16 +450,20 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99)
+        dtype = self.settings.value("last_datatype", None)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99, dtype=dtype)
         if ok:
+            self.settings.setValue("last_datatype", args[4])
             new_node = parent.add_variable(*args)
             self._after_add(new_node)
 
     @trycatchslot
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99)
+        dtype = self.settings.value("last_datatype", None)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99, dtype=dtype)
         if ok:
+            self.settings.setValue("last_datatype", args[4])
             new_node = parent.add_property(*args)
             self._after_add(new_node)
 
