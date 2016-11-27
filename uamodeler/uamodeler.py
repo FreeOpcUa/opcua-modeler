@@ -25,6 +25,7 @@ from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -130,10 +131,10 @@ class UaModeler(QMainWindow):
         self.ui.actionCopy.triggered.connect(self._copy)
         self.ui.actionPaste.triggered.connect(self._paste)
         self.ui.actionDelete.triggered.connect(self._delete)
-        self.ui.actionImport.triggered.connect(self._import)
-        self.ui.actionSave.triggered.connect(self._save)
+        self.ui.actionImport.triggered.connect(self._import_slot)
+        self.ui.actionSave.triggered.connect(self._save_slot)
         self.ui.actionSaveAs.triggered.connect(self._save_as)
-        self.ui.actionCloseModel.triggered.connect(self._close_model)
+        self.ui.actionCloseModel.triggered.connect(self._close_model_slot)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
         self.ui.actionAddFolder.triggered.connect(self._add_folder)
@@ -206,6 +207,7 @@ class UaModeler(QMainWindow):
         if node:
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
+    @trycatchslot
     def _delete(self):
         node = self.tree_ui.get_current_node()
         if node:
@@ -216,11 +218,13 @@ class UaModeler(QMainWindow):
                     self._new_nodes.remove(n)
             self.tree_ui.remove_current_item()
 
+    @trycatchslot
     def _copy(self):
         node = self.tree_ui.get_current_node()
         if node:
             self._copy_clipboard = node
 
+    @trycatchslot
     def _paste(self):
         if self._copy_clipboard:
             parent = self.tree_ui.get_current_node()
@@ -281,6 +285,10 @@ class UaModeler(QMainWindow):
         #self.ui.actionAddVariableType.setEnabled(True)
         #self.ui.actionAddObjectType.setEnabled(True)
 
+    @trycatchslot
+    def _close_model_slot(self):
+        self._close_model()
+
     def _close_model(self):
         if not self.really_exit():
             return False
@@ -291,6 +299,7 @@ class UaModeler(QMainWindow):
         self.idx_ui.clear()
         self.nodesets_ui.clear()
         self._current_path = None
+        self._modified = False
         self._update_title()
         if self.server is not None:
             self.server.stop()
@@ -300,9 +309,13 @@ class UaModeler(QMainWindow):
     def _update_title(self):
         self.setWindowTitle("FreeOpcUa Modeler " + str(self._current_path))
 
+    @trycatchslot
     def _new(self):
         if not self._close_model():
             return
+        self._create_new_model()
+
+    def _create_new_model(self):
         self.server = Server()
         endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
         print("Starting server on ", endpoint)
@@ -326,10 +339,15 @@ class UaModeler(QMainWindow):
         self._update_title()
         return True
 
-    def _import(self):
-        path, ok = QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_dir)
-        if not ok:
-            return None
+    @trycatchslot
+    def _import_slot(self):
+        self._import()
+
+    def _import(self, path=None):
+        if not path:
+            path, ok = self._get_xml()
+            if not ok:
+                return None
         self._last_dir = os.path.dirname(path)
         try:
             new_nodes = self.server.import_xml(path)
@@ -343,22 +361,37 @@ class UaModeler(QMainWindow):
         self.idx_ui.reload()
         return path
 
-    def _open(self):
-        if self._new():
-            path = self._import()
-            if path:
-                self._modified = False
-                self._current_path = path
-                self._update_title()
-            else:
-                self._close_model()
+    def _get_xml(self):
+        return QFileDialog.getOpenFileName(self, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_dir)
 
+    @trycatchslot
+    def _open(self):
+        if not self._close_model():
+            return
+        path, ok = self._get_xml()
+        if not ok:
+            return
+        self._create_new_model()
+        try:
+            path = self._import(path)
+        except:
+            self._close_model()
+            raise
+        self._modified = False
+        self._current_path = path
+        self._update_title()
+
+    @trycatchslot
     def _save_as(self):
         path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
             self._current_path = path
             self._update_title()
             self._save()
+
+    @trycatchslot
+    def _save_slot(self):
+        self._save()
 
     def _save(self):
         if not self._current_path or self._current_path == "NoName":
@@ -493,7 +526,7 @@ class UaModeler(QMainWindow):
         self.ui.statusBar.show()
         self.ui.statusBar.setStyleSheet("QStatusBar { background-color : red; color : black; }")
         self.ui.statusBar.showMessage(str(msg))
-        QTimer.singleShot(1500, self.ui.statusBar.hide)
+        QTimer.singleShot(2500, self.ui.statusBar.hide)
 
     def show_msg(self, msg):
         self.ui.statusBar.show()
