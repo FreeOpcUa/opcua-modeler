@@ -29,6 +29,18 @@ from uamodeler.refnodesets_widget import RefNodeSetsWidget
 logger = logging.getLogger(__name__)
 
 
+class QtHandler(logging.Handler):
+
+    def __init__(self, modeler):
+        logging.Handler.__init__(self)
+        self.modeler = modeler
+
+    def emit(self, record):
+        print("HANDLER emit", record)
+        msg = self.format(record)
+        self.modeler.ui.logTextEdit.append(msg)
+
+
 class BoldDelegate(QStyledItemDelegate):
 
     def __init__(self, parent, model, added_node_list):
@@ -564,6 +576,10 @@ class UaModeler(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     modeler = UaModeler()
+    handler = QtHandler(modeler)
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(logging.INFO)
     modeler.show()
     sys.exit(app.exec_())
 

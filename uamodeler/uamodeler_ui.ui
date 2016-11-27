@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>922</width>
-    <height>692</height>
+    <height>755</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,112 +20,125 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QSplitter" name="splitterCenter">
+     <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QSplitter" name="splitterLeft">
+      <widget class="QSplitter" name="splitterCenter">
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
-       <widget class="QTreeView" name="refNodeSetsView"/>
-       <widget class="QTreeView" name="namespaceView"/>
-       <widget class="QTreeView" name="treeView">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QSplitter" name="splitterLeft">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
-        <property name="contextMenuPolicy">
-         <enum>Qt::ActionsContextMenu</enum>
+        <widget class="QTreeView" name="refNodeSetsView"/>
+        <widget class="QTreeView" name="namespaceView"/>
+        <widget class="QTreeView" name="treeView">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="contextMenuPolicy">
+          <enum>Qt::ActionsContextMenu</enum>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="dragEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="dragDropMode">
+          <enum>QAbstractItemView::DragOnly</enum>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QSplitter" name="splitterRight">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
         </property>
-        <property name="editTriggers">
-         <set>QAbstractItemView::NoEditTriggers</set>
-        </property>
-        <property name="dragEnabled">
-         <bool>true</bool>
-        </property>
-        <property name="dragDropMode">
-         <enum>QAbstractItemView::DragOnly</enum>
-        </property>
+        <widget class="QFrame" name="frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Attributes Editor</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTreeView" name="attrView">
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::AdjustToContents</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::AllEditTriggers</set>
+            </property>
+            <property name="showDropIndicator" stdset="0">
+             <bool>false</bool>
+            </property>
+            <property name="textElideMode">
+             <enum>Qt::ElideNone</enum>
+            </property>
+            <property name="autoExpandDelay">
+             <number>-1</number>
+            </property>
+            <property name="indentation">
+             <number>18</number>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+         <zorder>attrView</zorder>
+         <zorder>label</zorder>
+        </widget>
+        <widget class="QFrame" name="frame_2">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>References Editor</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTableView" name="refView">
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
-      <widget class="QSplitter" name="splitterRight">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+      <widget class="QTextEdit" name="logTextEdit">
+       <property name="minimumSize">
+        <size>
+         <width>400</width>
+         <height>100</height>
+        </size>
        </property>
-       <widget class="QFrame" name="frame">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Attributes Editor</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTreeView" name="attrView">
-           <property name="sizeAdjustPolicy">
-            <enum>QAbstractScrollArea::AdjustToContents</enum>
-           </property>
-           <property name="editTriggers">
-            <set>QAbstractItemView::AllEditTriggers</set>
-           </property>
-           <property name="showDropIndicator" stdset="0">
-            <bool>false</bool>
-           </property>
-           <property name="textElideMode">
-            <enum>Qt::ElideNone</enum>
-           </property>
-           <property name="autoExpandDelay">
-            <number>-1</number>
-           </property>
-           <property name="indentation">
-            <number>18</number>
-           </property>
-           <property name="sortingEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-        <zorder>attrView</zorder>
-        <zorder>label</zorder>
-       </widget>
-       <widget class="QFrame" name="frame_2">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>References Editor</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTableView" name="refView">
-           <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
       </widget>
      </widget>
     </item>
