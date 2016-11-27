@@ -1,10 +1,15 @@
+import logging
+
 from PyQt5.QtCore import pyqtSignal, Qt, QObject
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QMenu, QAction, QInputDialog, QStyledItemDelegate
+from PyQt5.QtWidgets import QMenu, QAction, QStyledItemDelegate
 
 from opcua import ua
 
 from uawidgets.utils import trycatch
+
+
+logger = logging.getLogger(__name__)
 
 
 class NamespaceWidget(QObject):
@@ -42,19 +47,11 @@ class NamespaceWidget(QObject):
         it.appendRow([QStandardItem(), QStandardItem(str(newidx)), uri_it])
         idx = self.model.indexFromItem(uri_it)
         self.view.edit(idx)
-        #uri, ok = QInputDialog.getText(self.view, "Enter new namespace URI", "URI:")
-        #uries = self.node.get_value()
-        #if uri in uries:
-            #return uries.index(uri)
-        #uries.append(uri)
-        #self.node.set_value(uries)
-        #self.reload()
-        #it = self.model.item(0, 0)
-        #it.appendRow([QStandardItem(), QStandardItem(str(len(uries)+1)), QStandardItem(uri)])
 
     def remove_namespace(self):
         uries = self.node.get_value()
         uries.remove(self._namespace_to_delete)
+        self.logger.info("Writting namespace array: %s", uries)
         self.node.set_value(uries)
         self.reload()
 
@@ -103,14 +100,20 @@ class MyDelegate(QStyledItemDelegate):
 
     @trycatch
     def createEditor(self, parent, option, idx):
-        print("EDITOR", idx.column())
+        """
+        Called when editing starts, here can we override default editor,
+        disable editing for some values, etc...
+        """
         if idx.column() != 2 or idx.row() == 0:
             return None
         return QStyledItemDelegate.createEditor(self, parent, option, idx)
 
     @trycatch
     def setModelData(self, editor, model, idx):
-        print("SET DATA", editor.text())
+        """
+        Called when editor has finished editing data
+        Here we call the default implementation and save our values
+        """
         QStyledItemDelegate.setModelData(self, editor, model, idx)
         root = model.item(0, 0)
         uries = []
@@ -121,7 +124,7 @@ class MyDelegate(QStyledItemDelegate):
             if not child:
                 break
             uries.append(child.text())
-        print("Writting namespace array: ", uries)
+        self.logger.info("Writting namespace array: %s", uries)
         self.widget.node.set_value(uries)
 
 
