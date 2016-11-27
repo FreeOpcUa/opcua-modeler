@@ -36,7 +36,6 @@ class QtHandler(logging.Handler):
         self.modeler = modeler
 
     def emit(self, record):
-        print("HANDLER emit", record)
         msg = self.format(record)
         self.modeler.ui.logTextEdit.append(msg)
 
@@ -234,6 +233,7 @@ class UaModeler(QMainWindow):
     def _copy(self):
         node = self.tree_ui.get_current_node()
         if node:
+
             self._copy_clipboard = node
 
     @trycatchslot
@@ -330,7 +330,7 @@ class UaModeler(QMainWindow):
     def _create_new_model(self):
         self.server = Server()
         endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
-        print("Starting server on ", endpoint)
+        logger.info("Starting server on %s", endpoint)
         self.server.set_endpoint(endpoint)
         self.server.set_server_name("OpcUa Modeler Server")
         # now remove freeopcua namespace, not necessary when modeling and
@@ -411,9 +411,9 @@ class UaModeler(QMainWindow):
             self._current_path = path
             if not ok:
                 return
-        print("Saving to", self._current_path)
-        print("Exporting  {} nodes: {}".format(len(self._new_nodes), self._new_nodes))
-        print("and namespaces: ", self.server.get_namespace_array()[1:])
+        logger.info("Saving to %s", self._current_path)
+        logger.info("Exporting  %s nodes: %s", len(self._new_nodes), self._new_nodes)
+        logger.info("and namespaces: %s ", self.server.get_namespace_array()[1:])
         exp = XmlExporter(self.server)
         uris = self.server.get_namespace_array()[1:]
         exp.build_etree(self._new_nodes, uris=uris)
@@ -453,6 +453,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
         if ok:
+            logger.info("Creating method type with args: %s", args)
             new_nodes = []
             new_node = parent.add_method(*args)
             new_nodes.append(new_node)
@@ -464,6 +465,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.server)
         if ok:
+            logger.info("Creating object type with args: %s", args)
             new_node = parent.add_object_type(*args)
             self._after_add(new_node)
 
@@ -472,6 +474,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.server)
         if ok:
+            logger.info("Creating folder with args: %s", args)
             new_node = parent.add_folder(*args)
             self._after_add(new_node)
 
@@ -480,6 +483,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
         if ok:
+            logger.info("Creating object with args: %s", args)
             nodeid, bname, otype = args
             new_nodes = instantiate(parent, otype, bname=bname, nodeid=nodeid)
             self._after_add(new_nodes)
@@ -489,6 +493,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server)
         if ok:
+            logger.info("Creating data type with args: %s", args)
             new_node = parent.add_data_type(*args)
             self._after_add(new_node)
     
@@ -498,6 +503,7 @@ class UaModeler(QMainWindow):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99, dtype=dtype)
         if ok:
+            logger.info("Creating variable with args: %s", args)
             self.settings.setValue("last_datatype", args[4])
             new_node = parent.add_variable(*args)
             self._after_add(new_node)
@@ -508,6 +514,7 @@ class UaModeler(QMainWindow):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99, dtype=dtype)
         if ok:
+            logger.info("Creating property with args: %s", args)
             self.settings.setValue("last_datatype", args[4])
             new_node = parent.add_property(*args)
             self._after_add(new_node)
@@ -517,6 +524,7 @@ class UaModeler(QMainWindow):
         parent = self.tree_ui.get_current_node()
         args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseVariableType))
         if ok:
+            logger.info("Creating variable type with args: %s", args)
             nodeid, bname, datatype = args
             new_node = parent.add_variable_type(nodeid, bname, datatype.nodeid)
             self._after_add(new_node)
@@ -534,7 +542,6 @@ class UaModeler(QMainWindow):
         self.attrs_ui.show_attrs(node)
 
     def show_error(self, msg):
-        logger.warning("showing error: %s", msg)
         self.ui.statusBar.show()
         self.ui.statusBar.setStyleSheet("QStatusBar { background-color : red; color : black; }")
         self.ui.statusBar.showMessage(str(msg))
@@ -578,8 +585,11 @@ def main():
     modeler = UaModeler()
     handler = QtHandler(modeler)
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    handler.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s')"))
     logging.getLogger().addHandler(handler)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger("uamodeler").setLevel(logging.INFO)
+    logging.getLogger("uawidgets").setLevel(logging.INFO)
+    #logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua server
     modeler.show()
     sys.exit(app.exec_())
 
