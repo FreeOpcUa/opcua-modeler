@@ -1,6 +1,12 @@
 Free OPC UA Modeler
 ===================
 
+
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-modeler/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-modeler/?branch=master)
+[![Build Status](https://travis-ci.org/FreeOpcUa/opcua-modeler.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-modeler)
+[![Build Status](https://travis-ci.org/FreeOpcUa/opcua-widgets.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-widgets)
+
+
 Free OPC UA Modeler is a tool for designing OPC UA address spaces. It uses OPC UA specified XML format which allows the produced XML to be imported into any OPC UA SDK.
 
 Basic features of the modeler work, but this is a work in progress.   
