@@ -15,6 +15,7 @@ install:
   - sudo apt-get -y install pyqt5-dev-tools  
   - pip install python-dateutil
   - pip install cryptography
+  - pip install pytz
   - git clone https://github.com/FreeOpcUa/python-opcua.git 
   - git clone https://github.com/FreeOpcUa/opcua-widgets.git 
 # command to run tests
