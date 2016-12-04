@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMenu, QAction, QStyledItemDelegate
 
 from opcua import ua
 
-from uawidgets.utils import trycatch
+from uawidgets.utils import trycatchslot
 
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class MyDelegate(QStyledItemDelegate):
         QStyledItemDelegate.__init__(self, parent)
         self.widget = widget
 
-    @trycatch
+    @trycatchslot
     def createEditor(self, parent, option, idx):
         """
         Called when editing starts, here can we override default editor,
@@ -108,7 +108,7 @@ class MyDelegate(QStyledItemDelegate):
             return None
         return QStyledItemDelegate.createEditor(self, parent, option, idx)
 
-    @trycatch
+    @trycatchslot
     def setModelData(self, editor, model, idx):
         """
         Called when editor has finished editing data

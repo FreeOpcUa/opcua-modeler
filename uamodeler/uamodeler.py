@@ -24,6 +24,7 @@ from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, New
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
+from uawidgets.utils import trycatchslot
 
 
 logger = logging.getLogger(__name__)
@@ -53,21 +54,6 @@ class BoldDelegate(QStyledItemDelegate):
         if item and item.data() in self.added_node_list:
             option.font.setWeight(QFont.Bold)
         QStyledItemDelegate.paint(self, painter, option, idx)
-
-
-def trycatchslot(func):
-    def wrapper(self, *args):
-        # filter out excess args as qt signals do
-        sig = inspect.signature(func)
-        args = args[:(len(sig.parameters)-1)]
-        result = None
-        try:
-            result = func(self, *args)
-        except Exception as ex:
-            logger.exception(ex)
-            self.show_error(ex)
-        return result
-    return wrapper
 
 
 class UaModeler(QMainWindow):
