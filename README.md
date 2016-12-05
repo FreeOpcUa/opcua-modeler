@@ -35,8 +35,10 @@ Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-mo
 To update to the latest release run: `pip install opcua-modeler --upgrade`
 
 ### Development version
-1. Clone python-opcua and set python to include the opcua directory. for ex: export PYTHONPATH=~/python-opcua/
-2. Clone opcua-modeler
-3. Cone opcua-widgets as uawidgets in opcua-modeler directory
-4. type 'python3 app.py' or 'make run'
+1. git clone https://github.com/FreeOpcUa/python-opcua.git 
+2. git clone https://github.com/FreeOpcUa/opcua-widgets.git
+3. export PYTHONPATH=$PWD/python-opcua;$PWD/opcua-widgets  # let Python find the repositories
+4. git clone https://github.com/FreeOpcUa/opcua-modeler.git 
+5. cd opcua-modeler;
+6. 'python3 app.py' # or 'make run'
 
