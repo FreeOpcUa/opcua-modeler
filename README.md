@@ -38,6 +38,7 @@ To update to the latest release run: `pip install opcua-modeler --upgrade`
 1. git clone https://github.com/FreeOpcUa/python-opcua.git 
 2. git clone https://github.com/FreeOpcUa/opcua-widgets.git
 3. export PYTHONPATH=$PWD/python-opcua;$PWD/opcua-widgets  # let Python find the repositories
+or set PYTHONPATH=%PYTHONPATH%;%cd%\python-opcua;%cd%\opcua-widgets on Windows
 4. git clone https://github.com/FreeOpcUa/opcua-modeler.git 
 5. cd opcua-modeler;
 6. 'python3 app.py' # or 'make run'
