@@ -25,20 +25,20 @@ class NamespaceWidget(QObject):
         delegate.error.connect(self.error.emit)
         self.view.setItemDelegate(delegate)
         self.node = None
-        self._namespace_to_delete = None
         self.view.header().setSectionResizeMode(1)
         
-        addNamespaceAction = QAction("Add Namespace", self.model)
-        addNamespaceAction.triggered.connect(self.add_namespace)
+        self.addNamespaceAction = QAction("Add Namespace", self.model)
+        self.addNamespaceAction.triggered.connect(self.add_namespace)
         self.removeNamespaceAction = QAction("Remove Namespace", self.model)
         self.removeNamespaceAction.triggered.connect(self.remove_namespace)
 
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.showContextMenu)
         self._contextMenu = QMenu()
-        self._contextMenu.addAction(addNamespaceAction)
+        self._contextMenu.addAction(self.addNamespaceAction)
         self._contextMenu.addAction(self.removeNamespaceAction)
 
+    @trycatchslot
     def add_namespace(self):
         uries = self.node.get_value()
         newidx = len(uries)
@@ -48,10 +48,17 @@ class NamespaceWidget(QObject):
         idx = self.model.indexFromItem(uri_it)
         self.view.edit(idx)
 
+    @trycatchslot
     def remove_namespace(self):
+        idx = self.view.currentIndex()
+        if not idx.isValid() or idx == self.model.item(0, 0):
+            logger.warning("No valid item selected to remove")
+        idx = idx.sibling(idx.row(), 2)
+        item = self.model.itemFromIndex(idx)
+        uri = item.text()
         uries = self.node.get_value()
-        uries.remove(self._namespace_to_delete)
-        self.logger.info("Writting namespace array: %s", uries)
+        uries.remove(uri)
+        logger.info("Writting namespace array: %s", uries)
         self.node.set_value(uries)
         self.reload()
 
@@ -83,8 +90,6 @@ class NamespaceWidget(QObject):
         if not idx.isValid():
             return
         if idx.parent().isValid() and idx.row() >= 1:
-            uri_it = self.model.itemFromIndex(idx.sibling(idx.row(), 2))
-            self._namespace_to_delete = uri_it.text()
             self.removeNamespaceAction.setEnabled(True)
         self._contextMenu.exec_(self.view.viewport().mapToGlobal(position))
 
@@ -124,7 +129,7 @@ class MyDelegate(QStyledItemDelegate):
             if not child:
                 break
             uries.append(child.text())
-        self.logger.info("Writting namespace array: %s", uries)
+        logger.info("Writting namespace array: %s", uries)
         self.widget.node.set_value(uries)
 
 

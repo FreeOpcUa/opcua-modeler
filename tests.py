@@ -1,23 +1,21 @@
 
 import unittest
 import sys
-print("SYS:PATH", sys.path)
 sys.path.insert(0, "python-opcua")
 sys.path.insert(0, "opcua-widgets")
 import os
-print("PWD", os.getcwd())
 
 from opcua import ua
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QAbstractItemDelegate
 from PyQt5.QtTest import QTest
 
 from uamodeler.uamodeler import UaModeler
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
 
 
-class Tester(unittest.TestCase):
+class TestModeler(unittest.TestCase):
     def setUp(self):
         self.modeler = UaModeler()
         self.modeler.ui.actionNew.activate(0)
@@ -92,6 +90,25 @@ class Tester(unittest.TestCase):
         with self.assertRaises(ValueError):
             args = dia.get_args()
             new_node = objects.add_variable(*args)
+    
+    def test_add_namespace(self):
+        view = self.modeler.idx_ui.view
+        self.modeler.idx_ui.addNamespaceAction.activate(0)
+        editor = view.focusWidget()
+        urn = "urn:new_namespace"
+        editor.setText(urn)
+        view.commitData(editor)
+        view.closeEditor(editor, QAbstractItemDelegate.NoHint)
+        urns = self.modeler.server.get_namespace_array()
+        self.assertIn(urn, urns)
+
+        root = view.model().index(0, 0)
+        idx = root.child(len(urns)-1, 0)
+        view.setCurrentIndex(idx)
+        self.modeler.idx_ui.removeNamespaceAction.activate(0)
+        urns = self.modeler.server.get_namespace_array()
+        self.assertNotIn(urn, urns)
+
 
 
 
