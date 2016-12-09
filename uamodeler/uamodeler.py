@@ -2,7 +2,6 @@
 
 import sys
 import os
-import inspect
 import logging
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
@@ -144,28 +143,35 @@ class UaModeler(QMainWindow):
         self._disable_actions()
 
     def _update_actions_state(self, current, previous):
+        self._disable_add_actions()
         node = self.tree_ui.get_current_node(current)
-        if not node or node == self.server.nodes.root:
-            self._disable_add_actions()
+        if not node or node in (self.server.nodes.root, 
+                                self.server.nodes.types, 
+                                self.server.nodes.event_types, 
+                                self.server.nodes.object_types, 
+                                self.server.nodes.reference_types, 
+                                self.server.nodes.variable_types, 
+                                self.server.nodes.data_types):
             return
         path = node.get_path()
         nodeclass = node.get_node_class()
 
+        self.ui.actionAddFolder.setEnabled(True)
+        self.ui.actionCopy.setEnabled(True)
+        self.ui.actionPaste.setEnabled(True)
+        self.ui.actionDelete.setEnabled(True)
+
         if self.server.nodes.base_object_type in path:
             self.ui.actionAddObjectType.setEnabled(True)
-        else:
-            self.ui.actionAddObjectType.setEnabled(False)
 
         if self.server.nodes.base_variable_type in path:
             self.ui.actionAddVariableType.setEnabled(True)
-        else:
-            self.ui.actionAddVariableType.setEnabled(False)
 
         if self.server.nodes.base_data_type in path:
             self.ui.actionAddDataType.setEnabled(True)
+            if self.server.nodes.enum_data_type in path:
+                self.ui.actionAddProperty.setEnabled(True)
             return  # not other nodes should be added here
-        else:
-            self.ui.actionAddDataType.setEnabled(False)
 
         if nodeclass != ua.NodeClass.Variable:
             self.ui.actionAddFolder.setEnabled(True)
@@ -173,12 +179,6 @@ class UaModeler(QMainWindow):
             self.ui.actionAddVariable.setEnabled(True)
             self.ui.actionAddProperty.setEnabled(True)
             self.ui.actionAddMethod.setEnabled(True)
-        else:
-            self.ui.actionAddFolder.setEnabled(False)
-            self.ui.actionAddObject.setEnabled(False)
-            self.ui.actionAddVariable.setEnabled(False)
-            self.ui.actionAddProperty.setEnabled(False)
-            self.ui.actionAddMethod.setEnabled(False)
 
     def setup_context_menu_tree(self):
         self.ui.treeView.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -262,6 +262,9 @@ class UaModeler(QMainWindow):
         self._disable_model_actions()
 
     def _disable_add_actions(self):
+        self.ui.actionPaste.setEnabled(False)
+        self.ui.actionCopy.setEnabled(False)
+        self.ui.actionDelete.setEnabled(False)
         self.ui.actionAddObject.setEnabled(False)
         self.ui.actionAddFolder.setEnabled(False)
         self.ui.actionAddVariable.setEnabled(False)
