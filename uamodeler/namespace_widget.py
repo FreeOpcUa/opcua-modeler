@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class NamespaceWidget(QObject):
 
-    error = pyqtSignal(str)
+    error = pyqtSignal(Exception)
 
     def __init__(self, view):
         QObject.__init__(self, view)
