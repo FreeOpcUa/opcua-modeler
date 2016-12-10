@@ -50,7 +50,7 @@ class BoldDelegate(QStyledItemDelegate):
     def paint(self, painter, option, idx):
         new_idx = idx.sibling(idx.row(), 0)
         item = self.model.itemFromIndex(new_idx)
-        if item and item.data() in self.added_node_list:
+        if item and item.data(Qt.UserRole) in self.added_node_list:
             option.font.setWeight(QFont.Bold)
         QStyledItemDelegate.paint(self, painter, option, idx)
 
