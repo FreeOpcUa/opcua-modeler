@@ -24,20 +24,10 @@ from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
 from uawidgets.utils import trycatchslot
+from uawidgets.logger import QtHandler
 
 
 logger = logging.getLogger(__name__)
-
-
-class QtHandler(logging.Handler):
-
-    def __init__(self, modeler):
-        logging.Handler.__init__(self)
-        self.modeler = modeler
-
-    def emit(self, record):
-        msg = self.format(record)
-        self.modeler.ui.logTextEdit.append(msg)
 
 
 class BoldDelegate(QStyledItemDelegate):
@@ -572,9 +562,7 @@ class UaModeler(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     modeler = UaModeler()
-    handler = QtHandler(modeler)
-    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    handler.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s')"))
+    handler = QtHandler(modeler.ui.logTextEdit)
     logging.getLogger().addHandler(handler)
     logging.getLogger("uamodeler").setLevel(logging.INFO)
     logging.getLogger("uawidgets").setLevel(logging.INFO)
