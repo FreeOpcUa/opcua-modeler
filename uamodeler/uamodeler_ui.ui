@@ -163,6 +163,7 @@
     <addaction name="actionImport"/>
     <addaction name="actionSave"/>
     <addaction name="actionSaveAs"/>
+    <addaction name="actionUseOpenUa"/>
     <addaction name="actionQuit"/>
    </widget>
    <addaction name="menuOPC_UA_Client"/>
@@ -313,6 +314,17 @@
    </property>
    <property name="toolTip">
     <string>Add Enum Type</string>
+   </property>
+  </action>
+  <action name="actionUseOpenUa">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Use Open6541 Server</string>
+   </property>
+   <property name="toolTip">
+    <string>User Open6541 Server</string>
    </property>
   </action>
  </widget>
