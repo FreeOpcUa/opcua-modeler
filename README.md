@@ -12,6 +12,8 @@ Free OPC UA Modeler is a tool for designing OPC UA address spaces. It uses OPC U
 Basic features of the modeler work, but this is a work in progress.   
 Bug reports and feature requests are welcome.
 
+Ïn the background the modeler uses an OPC UA server which can be connected to. The server is either a python-opcua server (default) or the C based open65421 server. To use the open62541 backend, open65241.so must be available as well as the its python wrapper.
+
 Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-modeler/issues/3
 
 ![Screenshot](/screenshot.png?raw=true "Screenshot")
