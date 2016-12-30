@@ -19,7 +19,7 @@ class RefNodeSetsWidget(QObject):
         self.model = QStandardItemModel()
         self.view.setModel(self.model)
         self.nodesets = []
-        self.server = None
+        self.server_mgr = None
         self._nodeset_to_delete = None
         self.view.header().setSectionResizeMode(1)
         
@@ -42,7 +42,7 @@ class RefNodeSetsWidget(QObject):
         if name in self.nodesets:
             return
         try:
-            self.server.import_xml(path)
+            self.server_mgr.import_xml(path)
         except Exception as ex:
             self.error.emit(ex)
             raise
@@ -67,8 +67,8 @@ class RefNodeSetsWidget(QObject):
         self.model.removeRow(idx.row())
         self.nodeset_removed.emit(name)
 
-    def set_server(self, server):
-        self.server = server
+    def set_server_mgr(self, server_mgr):
+        self.server_mgr = server_mgr
         self.nodesets = []
         self.model.clear()
         self.model.setHorizontalHeaderLabels(['Node Sets'])
@@ -81,7 +81,7 @@ class RefNodeSetsWidget(QObject):
         self.model.clear()
 
     def showContextMenu(self, position):
-        if not self.server:
+        if not self.server_mgr:
             return
         idx = self.view.currentIndex()
         if not idx.isValid() or idx.row() == 0:

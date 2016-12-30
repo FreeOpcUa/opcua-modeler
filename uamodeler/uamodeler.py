@@ -9,10 +9,8 @@ from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QStyledItemDelegate, QMenu
 
 from opcua import ua
-from opcua import Server
 from opcua import copy_node
 from opcua.common.ua_utils import get_node_children
-from opcua.common.xmlexporter import XmlExporter
 from opcua.common.instantiate import instantiate
 
 from uawidgets import resources
@@ -20,11 +18,13 @@ from uawidgets.attrs_widget import AttrsWidget
 from uawidgets.tree_widget import TreeWidget
 from uawidgets.refs_widget import RefsWidget
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
+from uawidgets.utils import trycatchslot
+from uawidgets.logger import QtHandler
+
+from uamodeler.server_manager import ServerManager
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
-from uawidgets.utils import trycatchslot
-from uawidgets.logger import QtHandler
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class UaModeler(QMainWindow):
 
         self._restore_state()
 
-        self.server = None
+        self.server_mgr = ServerManager(self.ui.actionUseOpenUa)
         self._new_nodes = []  # the added nodes we will save
         self._current_path = None
         self._modified = False
@@ -135,13 +135,13 @@ class UaModeler(QMainWindow):
     def _update_actions_state(self, current, previous):
         self._disable_add_actions()
         node = self.tree_ui.get_current_node(current)
-        if not node or node in (self.server.nodes.root, 
-                                self.server.nodes.types, 
-                                self.server.nodes.event_types, 
-                                self.server.nodes.object_types, 
-                                self.server.nodes.reference_types, 
-                                self.server.nodes.variable_types, 
-                                self.server.nodes.data_types):
+        if not node or node in (self.server_mgr.nodes.root, 
+                                self.server_mgr.nodes.types, 
+                                self.server_mgr.nodes.event_types, 
+                                self.server_mgr.nodes.object_types, 
+                                self.server_mgr.nodes.reference_types, 
+                                self.server_mgr.nodes.variable_types, 
+                                self.server_mgr.nodes.data_types):
             return
         path = node.get_path()
         nodeclass = node.get_node_class()
@@ -151,15 +151,15 @@ class UaModeler(QMainWindow):
         self.ui.actionPaste.setEnabled(True)
         self.ui.actionDelete.setEnabled(True)
 
-        if self.server.nodes.base_object_type in path:
+        if self.server_mgr.nodes.base_object_type in path:
             self.ui.actionAddObjectType.setEnabled(True)
 
-        if self.server.nodes.base_variable_type in path:
+        if self.server_mgr.nodes.base_variable_type in path:
             self.ui.actionAddVariableType.setEnabled(True)
 
-        if self.server.nodes.base_data_type in path:
+        if self.server_mgr.nodes.base_data_type in path:
             self.ui.actionAddDataType.setEnabled(True)
-            if self.server.nodes.enum_data_type in path:
+            if self.server_mgr.nodes.enum_data_type in path:
                 self.ui.actionAddProperty.setEnabled(True)
             return  # not other nodes should be added here
 
@@ -292,9 +292,7 @@ class UaModeler(QMainWindow):
         self._current_path = None
         self._modified = False
         self._update_title()
-        if self.server is not None:
-            self.server.stop()
-        self.server = None
+        self.server_mgr.stop_server()
         return True
 
     def _update_title(self):
@@ -307,23 +305,15 @@ class UaModeler(QMainWindow):
         self._create_new_model()
 
     def _create_new_model(self):
-        self.server = Server()
-        endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
-        logger.info("Starting server on %s", endpoint)
-        self.server.set_endpoint(endpoint)
-        self.server.set_server_name("OpcUa Modeler Server")
-        # now remove freeopcua namespace, not necessary when modeling and
-        # ensures correct idx for exported nodesets
-        ns_node = self.server.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
-        nss = ns_node.get_value()
-        ns_node.set_value(nss[1:])
-
         del(self._new_nodes[:])  # empty list while keeping reference
 
-        self.server.start()
-        self.tree_ui.set_root_node(self.server.get_root_node())
-        self.idx_ui.set_node(self.server.get_node(ua.ObjectIds.Server_NamespaceArray))
-        self.nodesets_ui.set_server(self.server)
+        endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
+        logger.info("Starting server on %s", endpoint)
+        self.server_mgr.start_server(endpoint)
+
+        self.tree_ui.set_root_node(self.server_mgr.nodes.root)
+        self.idx_ui.set_node(self.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray))
+        self.nodesets_ui.set_server_mgr(self.server_mgr)
         self._modified = False
         self._enable_model_actions()
         self._current_path = "NoName"
@@ -341,8 +331,8 @@ class UaModeler(QMainWindow):
                 return None
         self._last_dir = os.path.dirname(path)
         try:
-            new_nodes = self.server.import_xml(path)
-            self._new_nodes.extend([self.server.get_node(node) for node in new_nodes])
+            new_nodes = self.server_mgr.import_xml(path)
+            self._new_nodes.extend([self.server_mgr.get_node(node) for node in new_nodes])
             self._modified = True
         except Exception as ex:
             self.show_error(ex)
@@ -392,12 +382,10 @@ class UaModeler(QMainWindow):
                 return
         logger.info("Saving to %s", self._current_path)
         logger.info("Exporting  %s nodes: %s", len(self._new_nodes), self._new_nodes)
-        logger.info("and namespaces: %s ", self.server.get_namespace_array()[1:])
-        exp = XmlExporter(self.server)
-        uris = self.server.get_namespace_array()[1:]
-        exp.build_etree(self._new_nodes, uris=uris)
+        logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
+        uris = self.server_mgr.get_namespace_array()[1:]
         try:
-            exp.write_xml(self._current_path)
+            self.server_mgr.export_xml(self._new_nodes, uris, self._current_path)
         except Exception as ex:
             self.show_error(ex)
             raise
@@ -430,7 +418,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_method(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server)
+        args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.server_mgr)
         if ok:
             logger.info("Creating method type with args: %s", args)
             new_nodes = []
@@ -442,7 +430,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_object_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.server)
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.server_mgr)
         if ok:
             logger.info("Creating object type with args: %s", args)
             new_node = parent.add_object_type(*args)
@@ -451,7 +439,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_folder(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.server)
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.server_mgr)
         if ok:
             logger.info("Creating folder with args: %s", args)
             new_node = parent.add_folder(*args)
@@ -460,7 +448,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_object(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseObjectType))
+        args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.server_mgr, base_node_type=self.server_mgr.nodes.base_object_type)
         if ok:
             logger.info("Creating object with args: %s", args)
             nodeid, bname, otype = args
@@ -470,7 +458,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_data_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server)
+        args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.server_mgr)
         if ok:
             logger.info("Creating data type with args: %s", args)
             new_node = parent.add_data_type(*args)
@@ -480,7 +468,7 @@ class UaModeler(QMainWindow):
     def _add_variable(self):
         parent = self.tree_ui.get_current_node()
         dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
             logger.info("Creating variable with args: %s", args)
             self.settings.setValue("last_datatype", args[4])
@@ -491,7 +479,7 @@ class UaModeler(QMainWindow):
     def _add_property(self):
         parent = self.tree_ui.get_current_node()
         dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
             logger.info("Creating property with args: %s", args)
             self.settings.setValue("last_datatype", args[4])
@@ -501,7 +489,7 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def _add_variable_type(self):
         parent = self.tree_ui.get_current_node()
-        args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.server, base_node_type=self.server.get_node(ua.ObjectIds.BaseVariableType))
+        args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.server_mgr, base_node_type=self.server_mgr.get_node(ua.ObjectIds.BaseVariableType))
         if ok:
             logger.info("Creating variable type with args: %s", args)
             nodeid, bname, datatype = args
@@ -554,8 +542,7 @@ class UaModeler(QMainWindow):
         self.settings.setValue("splitter_left", self.ui.splitterLeft.saveState())
         self.settings.setValue("splitter_right", self.ui.splitterRight.saveState())
         self.settings.setValue("splitter_center", self.ui.splitterCenter.saveState())
-        if self.server:
-            self.server.stop()
+        self.server_mgr.close()
         event.accept()
 
 
