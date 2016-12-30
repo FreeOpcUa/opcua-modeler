@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox,
 from opcua import ua
 from opcua import copy_node
 from opcua.common.ua_utils import get_node_children
-from opcua.common.xmlexporter import XmlExporter
 from opcua.common.instantiate import instantiate
 
 from uawidgets import resources
@@ -22,8 +21,7 @@ from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, New
 from uawidgets.utils import trycatchslot
 from uawidgets.logger import QtHandler
 
-from uamodeler.server_manager import ServerManagerPython
-from uamodeler.server_manager import ServerManagerC
+from uamodeler.server_manager import ServerManager
 from uamodeler.uamodeler_ui import Ui_UaModeler
 from uamodeler.namespace_widget import NamespaceWidget
 from uamodeler.refnodesets_widget import RefNodeSetsWidget
@@ -66,7 +64,7 @@ class UaModeler(QMainWindow):
 
         self._restore_state()
 
-        self.server_mgr = None
+        self.server_mgr = ServerManager(self.ui.actionUseOpenUa)
         self._new_nodes = []  # the added nodes we will save
         self._current_path = None
         self._modified = False
@@ -131,20 +129,8 @@ class UaModeler(QMainWindow):
         self.ui.actionAddVariable.triggered.connect(self._add_variable)
         self.ui.actionAddVariableType.triggered.connect(self._add_variable_type)
         self.ui.actionAddProperty.triggered.connect(self._add_property)
-        use_openua = int(self.settings.value("use_openua_server", 0))
-        self.ui.actionUseOpenUa.setChecked(use_openua)
-        self.ui.actionUseOpenUa.toggled.connect(self._toggle_use_openua)
-        self._toggle_use_openua(use_openua)  # init state
 
         self._disable_actions()
-
-    def _toggle_use_openua(self, val):
-        print("SET SERVER", val)
-        if val:
-            print("use C")
-            self.server_mgr = ServerManagerC()
-        else:
-            self.server_mgr = ServerManagerPython()
 
     def _update_actions_state(self, current, previous):
         self._disable_add_actions()
@@ -397,11 +383,9 @@ class UaModeler(QMainWindow):
         logger.info("Saving to %s", self._current_path)
         logger.info("Exporting  %s nodes: %s", len(self._new_nodes), self._new_nodes)
         logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
-        exp = XmlExporter(self.server_mgr)
         uris = self.server_mgr.get_namespace_array()[1:]
-        exp.build_etree(self._new_nodes, uris=uris)
         try:
-            exp.write_xml(self._current_path)
+            self.server_mgr.export_xml(self._new_nodes, uris, self._current_path)
         except Exception as ex:
             self.show_error(ex)
             raise
@@ -558,8 +542,7 @@ class UaModeler(QMainWindow):
         self.settings.setValue("splitter_left", self.ui.splitterLeft.saveState())
         self.settings.setValue("splitter_right", self.ui.splitterRight.saveState())
         self.settings.setValue("splitter_center", self.ui.splitterCenter.saveState())
-        self.settings.setValue("use_openua_server", int(self.ui.actionUseOpenUa.isChecked()))
-        self.server_mgr.stop_server()
+        self.server_mgr.close()
         event.accept()
 
 
