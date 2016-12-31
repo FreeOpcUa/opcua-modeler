@@ -43,11 +43,11 @@ class ServerManager(object):
         self.stop_server()
 
     def _toggle_use_openua(self, val):
-        print("SET SERVER", val)
         if val:
-            print("use C")
+            logger.info("Set us of open62451 backend")
             self._backend = ServerC()
         else:
+            logger.info("Set us of python-opcua backend")
             self._backend = ServerPython()
 
     @property
@@ -83,6 +83,7 @@ class ServerPython(object):
         self.get_namespace_array = None
 
     def start_server(self, endpoint):
+        logger.info("Starting python-opcua server")
         self._server = Server()
         self._server.set_endpoint(endpoint)
         self._server.set_server_name("OpcUa Modeler Server")
@@ -100,6 +101,8 @@ class ServerPython(object):
         if self._server is not None:
             self._server.stop()
             self._server = None
+            self.get_node = None
+            self.get_namespace_array = None
 
     def import_xml(self, path):
         return self._server.import_xml(path)
@@ -118,12 +121,12 @@ class UAServer(Thread):
         self.endpoint = None
 
     def run(self):
-        print("start server")
+        logger.info("Starting open62451 server")
         self.status = self.server.run(self.endpoint)
-        print("server stopped")
+        logger.info("open62451 server stopped")
 
     def stop(self):
-        print("trying to stop server")
+        logger.info("trying to stop open62451 server")
         self.server.stop()
 
 
@@ -161,6 +164,8 @@ class ServerC(object):
             self._server.stop()
             time.sleep(0.2)
             self._server = None
+            self.get_node = None
+            self.get_namespace_array = None
 
     def import_xml(self, path):
         return self._client.import_xml(path)
