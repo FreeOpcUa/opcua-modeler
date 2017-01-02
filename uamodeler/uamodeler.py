@@ -105,14 +105,14 @@ class UaModeler(QMainWindow):
         self.setup_context_menu_tree()
 
         # actions
-        self.ui.actionNew.triggered.connect(self._new)
-        self.ui.actionOpen.triggered.connect(self._open)
+        self.ui.actionNew.triggered.connect(self._new_slot)
+        self.ui.actionOpen.triggered.connect(self._open_slot)
         self.ui.actionCopy.triggered.connect(self._copy)
         self.ui.actionPaste.triggered.connect(self._paste)
         self.ui.actionDelete.triggered.connect(self._delete)
         self.ui.actionImport.triggered.connect(self._import_slot)
         self.ui.actionSave.triggered.connect(self._save_slot)
-        self.ui.actionSaveAs.triggered.connect(self._save_as)
+        self.ui.actionSaveAs.triggered.connect(self._save_as_slot)
         self.ui.actionCloseModel.triggered.connect(self._close_model_slot)
         self.ui.actionAddObjectType.triggered.connect(self._add_object_type)
         self.ui.actionAddObject.triggered.connect(self._add_object)
@@ -191,7 +191,7 @@ class UaModeler(QMainWindow):
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
     @trycatchslot
-    def _new(self):
+    def _new_slot(self):
         if not self._close_model():
             return
         self.model_mgr.new_model()
@@ -217,9 +217,16 @@ class UaModeler(QMainWindow):
         self._close_model()
 
     def _close_model(self):
-        if not self.really_exit():
-            return False
-        self.model_mgr.close_model()
+        if self.model_mgr.modified:
+            reply = QMessageBox.question(
+                self,
+                "OPC UA Modeler",
+                "Model is modified, do you really want to close model?",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+            )
+            if reply != QMessageBox.Yes:
+                return False
+        self.model_mgr.close_model(force=True)
         return True
 
     def _get_xml(self):
@@ -229,13 +236,13 @@ class UaModeler(QMainWindow):
         return path, ok
 
     @trycatchslot
-    def _open(self):
+    def _open_slot(self):
         if not self._close_model():
             return
         path, ok = self._get_xml()
         if not ok:
             return
-        self.modee_mgr.open_model(path)
+        self.model_mgr.open_model(path)
 
     @trycatchslot
     def _import_slot(self):
@@ -315,55 +322,42 @@ class UaModeler(QMainWindow):
     def update_title(self, path):
         self.setWindowTitle("FreeOpcUa Modeler " + str(path))
 
-    def really_exit(self):
-        if self.model_mgr.modified:
-            reply = QMessageBox.question(
-                self,
-                "OPC UA Modeler",
-                "Model is modified, do you really want to close model?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
-            )
-            if reply != QMessageBox.Yes:
-                return False
-
-        return True
-
     @trycatchslot
     def _add_method(self):
         args, ok = NewUaMethodDialog.getArgs(self, "Add Method", self.model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_method(args)
+            self.model_mgr.add_method(*args)
 
     @trycatchslot
     def _add_object_type(self):
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Object Type", self.model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_object_type(args)
+            self.model_mgr.add_object_type(*args)
 
     @trycatchslot
     def _add_folder(self):
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Folder", self.model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_folder(args)
+            self.model_mgr.add_folder(*args)
 
     @trycatchslot
     def _add_object(self):
         args, ok = NewUaObjectDialog.getArgs(self, "Add Object", self.model_mgr.server_mgr, base_node_type=self.model_mgr.server_mgr.nodes.base_object_type)
         if ok:
-            self.model_mgr.add_object(args)
+            self.model_mgr.add_object(*args)
 
     @trycatchslot
     def _add_data_type(self):
         args, ok = NewNodeBaseDialog.getArgs(self, "Add Data Type", self.model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_data_type(args)
+            self.model_mgr.add_data_type(*args)
     
     @trycatchslot
     def _add_variable(self):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self, "Add Variable", self.model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self.model_mgr.add_variable(args)
+            self.model_mgr.add_variable(*args)
             self.settings.setValue("last_datatype", args[4])
 
     @trycatchslot
@@ -371,13 +365,13 @@ class UaModeler(QMainWindow):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self, "Add Property", self.model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self.model_mgr.add_property(args)
+            self.model_mgr.add_property(*args)
 
     @trycatchslot
     def _add_variable_type(self):
         args, ok = NewUaObjectDialog.getArgs(self, "Add Variable Type", self.model_mgr.server_mgr, base_node_type=self.model_mgr.server_mgr.get_node(ua.ObjectIds.BaseVariableType))
         if ok:
-            self.model_mgr.add_variable_type(args)
+            self.model_mgr.add_variable_type(*args)
 
     @trycatchslot
     def show_refs(self, idx=None):
@@ -413,7 +407,7 @@ class UaModeler(QMainWindow):
         self.attrs_ui.clear()
 
     def closeEvent(self, event):
-        if not self.model_mgr.close_model():
+        if not self._close_model():
             event.ignore()
             return
         self.attrs_ui.save_state()

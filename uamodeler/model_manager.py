@@ -7,6 +7,8 @@ from opcua import copy_node
 from opcua.common.instantiate import instantiate
 from opcua.common.ua_utils import get_node_children
 
+from uawidgets.utils import trycatchslot
+
 from uamodeler.server_manager import ServerManager
 
 
@@ -193,8 +195,9 @@ class ModelManager(QObject):
         self._after_add(new_node)
         return new_node
 
+    @trycatchslot
     def _attr_written(self, attr, dv):
-        self.modeler_mgr.modified = True
+        self.modified = True
         if attr == ua.AttributeIds.BrowseName:
             self.modeler.tree_ui.update_browse_name_current_item(dv.Value.Value)
         elif attr == ua.AttributeIds.DisplayName:
