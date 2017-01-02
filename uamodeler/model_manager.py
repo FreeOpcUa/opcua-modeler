@@ -43,7 +43,7 @@ class ModelManager(QObject):
             self.modeler.tree_ui.remove_current_item()
 
     def paste_node(self, node):
-        parent = self.modeler.tree_ui.get_current_node()
+        parent = self.modeler.get_current_node()
         try:
             added_nodes = copy_node(parent, node)
         except Exception as ex:
@@ -57,16 +57,12 @@ class ModelManager(QObject):
     def close_model(self, force=False):
         if not force and self.modified:
             raise RuntimeError("Model is modified, use force to close it")
-        self.modeler.disable_actions()
-        self.modeler.tree_ui.clear()
-        self.modeler.refs_ui.clear()
-        self.modeler.attrs_ui.clear()
-        self.modeler.idx_ui.clear()
-        self.modeler.nodesets_ui.clear()
+        self.modeler.actions.disable_all_actions()
+        self.server_mgr.stop_server()
         self.current_path = None
         self.modified = False
         self.modeler.update_title("")
-        self.server_mgr.stop_server()
+        self.modeler.clear_all_widgets()
 
     def new_model(self):
         if self.modified:
@@ -81,7 +77,7 @@ class ModelManager(QObject):
         self.modeler.idx_ui.set_node(self.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray))
         self.modeler.nodesets_ui.set_server_mgr(self.server_mgr)
         self.modified = False
-        self.modeler.enable_model_actions()
+        self.modeler.actions.enable_model_actions()
         self.current_path = None
         self.modeler.update_title("No Name")
         return True
