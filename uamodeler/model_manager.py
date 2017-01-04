@@ -96,7 +96,7 @@ class ModelManager(QObject):
         try:
             path = self.import_xml(path)
         except:
-            self.close_model()
+            self.close_model(force=True)
             raise
         self.modified = False
         self.current_path = path
