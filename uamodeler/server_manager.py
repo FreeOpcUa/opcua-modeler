@@ -11,12 +11,12 @@ from opcua.common.xmlexporter import XmlExporter
 
 logger = logging.getLogger(__name__)
 
-OPENUA = True
+OPEN62541 = True
 try:
-    import openua
+    import open62541
 except ImportError as ex:
     logger.info("Could not import open62541 python wrapper: %s ", ex)
-    OPENUA = False
+    OPEN62541 = False
 
 
 class ServerManager(object):
@@ -25,29 +25,23 @@ class ServerManager(object):
         self._action = action
         self._settings = QSettings()
 
-        if OPENUA:
-            use_openua = int(self._settings.value("use_openua_server", 0))
-            logger.info("Using open62541: %s", openua)
-            self._action.setChecked(use_openua)
-            self._action.toggled.connect(self._toggle_use_openua)
-            self._toggle_use_openua(use_openua)  # init state
+        if OPEN62541:
+            use_open62541 = int(self._settings.value("use_open62541_server", 0))
+            logger.info("Using open62541: %s", open62541)
+            self._action.setChecked(use_open62541)
+            self._action.toggled.connect(self._toggle_use_open62541)
+            self._toggle_use_open62541(use_open62541)  # init state
         else:
             logger.info("Open62541 python wrappers not available, disabling action")
             self._action.setChecked(False)
             self._action.setEnabled(False)
 
-
-    def close(self):
-        if OPENUA:
-            self._settings.setValue("use_openua_server", int(self._action.isChecked()))
-        self.stop_server()
-
-    def _toggle_use_openua(self, val):
+    def _toggle_use_open62541(self, val):
         if val:
-            logger.info("Set us of open62451 backend")
+            logger.info("Set use of open62451 backend")
             self._backend = ServerC()
         else:
-            logger.info("Set us of python-opcua backend")
+            logger.info("Set use of python-opcua backend")
             self._backend = ServerPython()
 
     @property
@@ -67,6 +61,8 @@ class ServerManager(object):
     def stop_server(self):
         self._backend.stop_server()
         self._action.setEnabled(True)
+        if OPEN62541:
+            self._settings.setValue("use_open62541_server", int(self._action.isChecked()))
 
     def import_xml(self, path):
         return self._backend.import_xml(path)
@@ -116,7 +112,7 @@ class ServerPython(object):
 class UAServer(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self.server = openua.Server()
+        self.server = open62541.Server()
         self.status = None
         self.endpoint = None
 
