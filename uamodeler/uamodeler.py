@@ -340,7 +340,7 @@ class UaModeler(QMainWindow):
         QCoreApplication.setApplicationName("OpcUaModeler")
         self.settings = QSettings()
 
-        self._restore_state()
+        self._restore_ui_geometri()
         
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
@@ -410,7 +410,7 @@ class UaModeler(QMainWindow):
         if node:
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
 
-    def _restore_state(self):
+    def _restore_ui_geometri(self):
         self.resize(int(self.settings.value("main_window_width", 800)),
                     int(self.settings.value("main_window_height", 600)))
         #self.restoreState(self.settings.value("main_window_state", b"", type="QByteArray"))
