@@ -6,10 +6,11 @@ from PyQt5.QtWidgets import QMenu, QAction, QInputDialog, QFileDialog
 
 from opcua import ua
 
+from uawidgets.utils import trycatchslot
 
 class RefNodeSetsWidget(QObject):
 
-    error = pyqtSignal(str)
+    error = pyqtSignal(Exception)
     nodeset_added = pyqtSignal(str)
     nodeset_removed = pyqtSignal(str)
 
@@ -34,6 +35,7 @@ class RefNodeSetsWidget(QObject):
         self._contextMenu.addAction(addNodeSetAction)
         self._contextMenu.addAction(self.removeNodeSetAction)
 
+    @trycatchslot
     def add_nodeset(self):
         path, ok = QFileDialog.getOpenFileName(self.view, caption="Import OPC UA XML Node Set", filter="XML Files (*.xml *.XML)", directory=".")
         if not ok:
@@ -53,9 +55,7 @@ class RefNodeSetsWidget(QObject):
         self.view.expandAll()
         self.nodeset_added.emit(path)
 
-    def get_nodesets(self):
-        return self.nodesets
-
+    @trycatchslot
     def remove_nodeset(self):
         idx = self.view.currentIndex()
         if not idx.isValid() or idx.row() == 0:
@@ -80,6 +80,7 @@ class RefNodeSetsWidget(QObject):
     def clear(self):
         self.model.clear()
 
+    @trycatchslot
     def showContextMenu(self, position):
         if not self.server_mgr:
             return

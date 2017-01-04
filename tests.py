@@ -52,8 +52,6 @@ class TestModelMgr(unittest.TestCase):
         self.mgr.close_model()
 
 
-
-
 class TestModeler(unittest.TestCase):
 
     @classmethod

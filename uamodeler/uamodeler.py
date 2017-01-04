@@ -47,30 +47,29 @@ class ActionsManager(object):
     Manage actions of Modeler
     """
 
-    def __init__(self, modeler):
-        self.modeler = modeler
-        self.ui = modeler.ui
-        self.model_slots = modeler.model_slots
+    def __init__(self, ui, model_mgr):
+        self.ui = ui
+        self.model_mgr = model_mgr
 
         self._fix_icons()
         # actions
-        self.ui.actionNew.triggered.connect(self.model_slots.new)
-        self.ui.actionOpen.triggered.connect(self.model_slots.open)
-        self.ui.actionCopy.triggered.connect(self.model_slots.copy)
-        self.ui.actionPaste.triggered.connect(self.model_slots.paste)
-        self.ui.actionDelete.triggered.connect(self.model_slots.delete)
-        self.ui.actionImport.triggered.connect(self.model_slots.import_xml)
-        self.ui.actionSave.triggered.connect(self.model_slots.save)
-        self.ui.actionSaveAs.triggered.connect(self.model_slots.save_as)
-        self.ui.actionCloseModel.triggered.connect(self.model_slots.close_model)
-        self.ui.actionAddObjectType.triggered.connect(self.model_slots.add_object_type)
-        self.ui.actionAddObject.triggered.connect(self.model_slots.add_object)
-        self.ui.actionAddFolder.triggered.connect(self.model_slots.add_folder)
-        self.ui.actionAddMethod.triggered.connect(self.model_slots.add_method)
-        self.ui.actionAddDataType.triggered.connect(self.model_slots.add_data_type)
-        self.ui.actionAddVariable.triggered.connect(self.model_slots.add_variable)
-        self.ui.actionAddVariableType.triggered.connect(self.model_slots.add_variable_type)
-        self.ui.actionAddProperty.triggered.connect(self.model_slots.add_property)
+        self.ui.actionNew.triggered.connect(self.model_mgr.new)
+        self.ui.actionOpen.triggered.connect(self.model_mgr.open)
+        self.ui.actionCopy.triggered.connect(self.model_mgr.copy)
+        self.ui.actionPaste.triggered.connect(self.model_mgr.paste)
+        self.ui.actionDelete.triggered.connect(self.model_mgr.delete)
+        self.ui.actionImport.triggered.connect(self.model_mgr.import_xml)
+        self.ui.actionSave.triggered.connect(self.model_mgr.save)
+        self.ui.actionSaveAs.triggered.connect(self.model_mgr.save_as)
+        self.ui.actionCloseModel.triggered.connect(self.model_mgr.close_model)
+        self.ui.actionAddObjectType.triggered.connect(self.model_mgr.add_object_type)
+        self.ui.actionAddObject.triggered.connect(self.model_mgr.add_object)
+        self.ui.actionAddFolder.triggered.connect(self.model_mgr.add_folder)
+        self.ui.actionAddMethod.triggered.connect(self.model_mgr.add_method)
+        self.ui.actionAddDataType.triggered.connect(self.model_mgr.add_data_type)
+        self.ui.actionAddVariable.triggered.connect(self.model_mgr.add_variable)
+        self.ui.actionAddVariableType.triggered.connect(self.model_mgr.add_variable_type)
+        self.ui.actionAddProperty.triggered.connect(self.model_mgr.add_property)
 
         self.disable_all_actions()
 
@@ -94,13 +93,13 @@ class ActionsManager(object):
 
     def update_actions_states(self, node):
         self.disable_add_actions()
-        if not node or node in (self.modeler.get_current_server().nodes.root, 
-                                self.modeler.get_current_server().nodes.types, 
-                                self.modeler.get_current_server().nodes.event_types, 
-                                self.modeler.get_current_server().nodes.object_types, 
-                                self.modeler.get_current_server().nodes.reference_types, 
-                                self.modeler.get_current_server().nodes.variable_types, 
-                                self.modeler.get_current_server().nodes.data_types):
+        if not node or node in (self.model_mgr.get_current_server().nodes.root, 
+                                self.model_mgr.get_current_server().nodes.types, 
+                                self.model_mgr.get_current_server().nodes.event_types, 
+                                self.model_mgr.get_current_server().nodes.object_types, 
+                                self.model_mgr.get_current_server().nodes.reference_types, 
+                                self.model_mgr.get_current_server().nodes.variable_types, 
+                                self.model_mgr.get_current_server().nodes.data_types):
             return
         path = node.get_path()
         nodeclass = node.get_node_class()
@@ -113,15 +112,15 @@ class ActionsManager(object):
 
         self.ui.actionPaste.setEnabled(True)
 
-        if self.modeler.get_current_server().nodes.base_object_type in path:
+        if self.model_mgr.get_current_server().nodes.base_object_type in path:
             self.ui.actionAddObjectType.setEnabled(True)
 
-        if self.modeler.get_current_server().nodes.base_variable_type in path:
+        if self.model_mgr.get_current_server().nodes.base_variable_type in path:
             self.ui.actionAddVariableType.setEnabled(True)
 
-        if self.modeler.get_current_server().nodes.base_data_type in path:
+        if self.model_mgr.get_current_server().nodes.base_data_type in path:
             self.ui.actionAddDataType.setEnabled(True)
-            if self.modeler.get_current_server().nodes.enum_data_type in path:
+            if self.model_mgr.get_current_server().nodes.enum_data_type in path:
                 self.ui.actionAddProperty.setEnabled(True)
             return  # not other nodes should be added here
 
@@ -159,9 +158,9 @@ class ActionsManager(object):
         self.ui.actionSaveAs.setEnabled(True)
 
 
-class ModelSlots(QObject):
+class ModelManagerUI(QObject):
     """
-    All methods that are called to modify/create/close models.
+    Interface to ModelMgr that displays dialogs to interact with users.
     Logic is inside ModelManager, this class only handle the UI and dialogs
     """
 
@@ -170,21 +169,28 @@ class ModelSlots(QObject):
     def __init__(self, modeler):
         QObject.__init__(self)
         self.modeler = modeler
-        self.model_mgr = modeler.model_mgr
+        self._model_mgr = ModelManager(modeler)
+        self._model_mgr.error.connect(self.error)
         self.settings = QSettings()
         self._last_dir = self.settings.value("last_dir", ".")
         self._copy_clipboard = None
+
+    def get_current_server(self):
+        return self._model_mgr.server_mgr
+
+    def get_new_nodes(self):
+        return self._model_mgr.new_nodes
 
     @trycatchslot
     def new(self):
         if not self.try_close_model():
             return
-        self.model_mgr.new_model()
+        self._model_mgr.new_model()
 
     @trycatchslot
     def delete(self):
         node = self.modeler.get_current_node()
-        self.model_mgr.delete_node(node)
+        self._model_mgr.delete_node(node)
 
     @trycatchslot
     def copy(self):
@@ -195,14 +201,14 @@ class ModelSlots(QObject):
     @trycatchslot
     def paste(self):
         if self._copy_clipboard:
-            self.model_mgr.paste_node(self._copy_clipboard)
+            self._model_mgr.paste_node(self._copy_clipboard)
 
     @trycatchslot
     def close_model(self):
         self.try_close_model()
 
     def try_close_model(self):
-        if self.model_mgr.modified:
+        if self._model_mgr.modified:
             reply = QMessageBox.question(
                 self.modeler,
                 "OPC UA Modeler",
@@ -211,7 +217,7 @@ class ModelSlots(QObject):
             )
             if reply != QMessageBox.Yes:
                 return False
-        self.model_mgr.close_model(force=True)
+        self._model_mgr.close_model(force=True)
         return True
 
     def _get_xml(self):
@@ -228,14 +234,14 @@ class ModelSlots(QObject):
         path, ok = self._get_xml()
         if not ok:
             return
-        self.model_mgr.open_model(path)
+        self._model_mgr.open_model(path)
 
     @trycatchslot
     def import_xml(self):
         path, ok = self._get_xml()
         if not ok:
             return None
-        self.model_mgr.import_xml(path)
+        self._model_mgr.import_xml(path)
 
     @trycatchslot
     def save_as(self):
@@ -253,65 +259,65 @@ class ModelSlots(QObject):
                 )
                 if reply != QMessageBox.Yes:
                     return
-            self.model_mgr.save_model(path)
+            self._model_mgr.save_model(path)
 
     @trycatchslot
     def save(self):
-        if not self.model_mgr.current_path:
+        if not self._model_mgr.current_path:
             self.save_as()
         else:
-            self.model_mgr.save_model()
+            self._model_mgr.save_model()
 
     @trycatchslot
     def add_method(self):
-        args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self.model_mgr.server_mgr)
+        args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self._model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_method(*args)
+            self._model_mgr.add_method(*args)
 
     @trycatchslot
     def add_object_type(self):
-        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Object Type", self.model_mgr.server_mgr)
+        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Object Type", self._model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_object_type(*args)
+            self._model_mgr.add_object_type(*args)
 
     @trycatchslot
     def add_folder(self):
-        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Folder", self.model_mgr.server_mgr)
+        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Folder", self._model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_folder(*args)
+            self._model_mgr.add_folder(*args)
 
     @trycatchslot
     def add_object(self):
-        args, ok = NewUaObjectDialog.getArgs(self.modeler, "Add Object", self.model_mgr.server_mgr, base_node_type=self.model_mgr.server_mgr.nodes.base_object_type)
+        args, ok = NewUaObjectDialog.getArgs(self.modeler, "Add Object", self._model_mgr.server_mgr, base_node_type=self._model_mgr.server_mgr.nodes.base_object_type)
         if ok:
-            self.model_mgr.add_object(*args)
+            self._model_mgr.add_object(*args)
 
     @trycatchslot
     def add_data_type(self):
-        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Data Type", self.model_mgr.server_mgr)
+        args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Data Type", self._model_mgr.server_mgr)
         if ok:
-            self.model_mgr.add_data_type(*args)
+            self._model_mgr.add_data_type(*args)
     
     @trycatchslot
     def add_variable(self):
         dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Variable", self.model_mgr.server_mgr, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Variable", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self.model_mgr.add_variable(*args)
+            self._model_mgr.add_variable(*args)
             self.settings.setValue("last_datatype", args[4])
 
     @trycatchslot
     def add_property(self):
         dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Property", self.model_mgr.server_mgr, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Property", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self.model_mgr.add_property(*args)
+            self._model_mgr.add_property(*args)
 
     @trycatchslot
     def add_variable_type(self):
-        args, ok = NewUaObjectDialog.getArgs(self.modeler, "Add Variable Type", self.model_mgr.server_mgr, base_node_type=self.model_mgr.server_mgr.get_node(ua.ObjectIds.BaseVariableType))
+        args, ok = NewUaObjectDialog.getArgs(self.modeler, "Add Variable Type", self._model_mgr.server_mgr, base_node_type=self._model_mgr.server_mgr.get_node(ua.ObjectIds.BaseVariableType))
         if ok:
-            self.model_mgr.add_variable_type(*args)
+            self._model_mgr.add_variable_type(*args)
 
 
 class UaModeler(QMainWindow):
@@ -354,20 +360,16 @@ class UaModeler(QMainWindow):
         self.ui.treeView.activated.connect(self.show_attrs)
         self.ui.treeView.clicked.connect(self.show_attrs)
 
-        self.model_mgr = ModelManager(self)
-        self.model_slots = ModelSlots(self)
-        self.actions = ActionsManager(self)
-        self.model_slots.error.connect(self.show_error)
+        self.model_mgr = ModelManagerUI(self)
+        self.model_mgr.error.connect(self.show_error)
+        self.actions = ActionsManager(self.ui, self.model_mgr)
         self.setup_context_menu_tree()
 
         self.setup_context_menu_tree()
 
-        delegate = BoldDelegate(self, self.tree_ui.model, self.model_mgr.new_nodes)
+        delegate = BoldDelegate(self, self.tree_ui.model, self.model_mgr.get_new_nodes())
         self.ui.treeView.setItemDelegate(delegate)
         self.ui.treeView.selectionModel().currentChanged.connect(self._update_actions_state)
-
-    def get_current_server(self):
-        return self.model_mgr.server_mgr
 
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
@@ -379,6 +381,7 @@ class UaModeler(QMainWindow):
         self.idx_ui.clear()
         self.nodesets_ui.clear()
 
+    @trycatchslot
     def _update_actions_state(self, current, previous):
         node = self.get_current_node(current)
         self.actions.update_actions_states(node)
@@ -449,7 +452,7 @@ class UaModeler(QMainWindow):
         self.attrs_ui.clear()
 
     def closeEvent(self, event):
-        if not self.model_slots.try_close_model():
+        if not self.model_mgr.try_close_model():
             event.ignore()
             return
         self.attrs_ui.save_state()
@@ -460,7 +463,6 @@ class UaModeler(QMainWindow):
         self.settings.setValue("splitter_left", self.ui.splitterLeft.saveState())
         self.settings.setValue("splitter_right", self.ui.splitterRight.saveState())
         self.settings.setValue("splitter_center", self.ui.splitterCenter.saveState())
-        self.model_mgr.server_mgr.close()
         event.accept()
 
 
