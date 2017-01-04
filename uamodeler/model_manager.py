@@ -83,13 +83,9 @@ class ModelManager(QObject):
         return True
 
     def import_xml(self, path):
-        try:
-            new_nodes = self.server_mgr.import_xml(path)
-            self.new_nodes.extend([self.server_mgr.get_node(node) for node in new_nodes])
-            self.modified = True
-        except Exception as ex:
-            self.show_error(ex)
-            raise
+        new_nodes = self.server_mgr.import_xml(path)
+        self.new_nodes.extend([self.server_mgr.get_node(node) for node in new_nodes])
+        self.modified = True
         # we maybe should only reload the imported nodes
         self.modeler.tree_ui.reload()
         self.modeler.idx_ui.reload()
@@ -114,11 +110,7 @@ class ModelManager(QObject):
         logger.info("Exporting  %s nodes: %s", len(self.new_nodes), self.new_nodes)
         logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
         uris = self.server_mgr.get_namespace_array()[1:]
-        try:
-            self.server_mgr.export_xml(self.new_nodes, uris, self.current_path)
-        except Exception as ex:
-            self.show_error(ex)
-            raise
+        self.server_mgr.export_xml(self.new_nodes, uris, self.current_path)
         self.modified = False
         logger.info("%s saved", self.current_path)
 
