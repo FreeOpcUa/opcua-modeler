@@ -30,6 +30,7 @@ class ModelManager(QObject):
         self.server_mgr = ServerManager(self.modeler.ui.actionUseOpenUa)
         self.new_nodes = []  # the added nodes we will save
         self.current_path = None
+        self.settings = QSettings()
         self.modified = False
         self.modeler.attrs_ui.attr_written.connect(self._attr_written)
 
@@ -149,7 +150,7 @@ class ModelManager(QObject):
         parent = self.modeler.tree_ui.get_current_node()
         logger.info("Creating object with args: %s", args)
         nodeid, bname, otype = args
-        new_nodes = instantiate(parent, otype, bname=bname, nodeid=nodeid)
+        new_nodes = instantiate(parent, otype, bname=bname, nodeid=nodeid, dname=ua.LocalizedText(bname.Name))
         self._after_add(new_nodes)
         return new_nodes
 

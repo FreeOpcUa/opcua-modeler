@@ -172,7 +172,7 @@ class ModelManagerUI(QObject):
         self._model_mgr = ModelManager(modeler)
         self._model_mgr.error.connect(self.error)
         self.settings = QSettings()
-        self._last_dir = self.settings.value("last_dir", ".")
+        self._last_model_dir = self.settings.value("last_model_dir", ".")
         self._copy_clipboard = None
 
     def get_current_server(self):
@@ -220,27 +220,25 @@ class ModelManagerUI(QObject):
         self._model_mgr.close_model(force=True)
         return True
 
-    def _get_xml(self):
-        path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_dir)
-        if ok:
-            self._last_dir = os.path.dirname(path)
-            self.settings.setValue("last_dir", self._last_dir)
-        return path, ok
-
     @trycatchslot
     def open(self):
         if not self.try_close_model():
             return
-        path, ok = self._get_xml()
+        path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_model_dir)
         if not ok:
             return
+        if self._last_model_dir != os.path.dirname(path):
+            self._last_model_dir = os.path.dirname(path)
+            self.settings.setValue("last_model_dir", self._last_model_dir)
         self._model_mgr.open_model(path)
 
     @trycatchslot
     def import_xml(self):
-        path, ok = self._get_xml()
+        last_import_dir = self.settings.value("last_import_dir", ".")
+        path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Import reference OPC UA XML", filter="XML Files (*.xml *.XML)", directory=last_import_dir)
         if not ok:
             return None
+        self.settings.setValue("last_import_dir", last_import_dir)
         self._model_mgr.import_xml(path)
 
     @trycatchslot
@@ -248,7 +246,7 @@ class ModelManagerUI(QObject):
         self._save_as()
 
     def _save_as(self):
-        path, ok = QFileDialog.getSaveFileName(self, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
+        path, ok = QFileDialog.getSaveFileName(self.modeler, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
             if os.path.isfile(path):
                 reply = QMessageBox.question(
@@ -259,6 +257,9 @@ class ModelManagerUI(QObject):
                 )
                 if reply != QMessageBox.Yes:
                     return
+            if self._last_model_dir != os.path.dirname(path):
+                self._last_model_dir = os.path.dirname(path)
+                self.settings.setValue("last_model_dir", self._last_model_dir)
             self._model_mgr.save_model(path)
 
     @trycatchslot
@@ -363,7 +364,6 @@ class UaModeler(QMainWindow):
         self.model_mgr = ModelManagerUI(self)
         self.model_mgr.error.connect(self.show_error)
         self.actions = ActionsManager(self.ui, self.model_mgr)
-        self.setup_context_menu_tree()
 
         self.setup_context_menu_tree()
 
@@ -396,6 +396,8 @@ class UaModeler(QMainWindow):
         self._contextMenu.addAction(self.ui.actionPaste)
         self._contextMenu.addAction(self.ui.actionDelete)
         self._contextMenu.addSeparator()
+        self._contextMenu.addAction(self.tree_ui.actionReload)
+        self._contextMenu.addSeparator()
         self._contextMenu.addAction(self.ui.actionAddFolder)
         self._contextMenu.addAction(self.ui.actionAddObject)
         self._contextMenu.addAction(self.ui.actionAddVariable)
@@ -406,6 +408,7 @@ class UaModeler(QMainWindow):
         self._contextMenu.addAction(self.ui.actionAddDataType)
 
     def _show_context_menu_tree(self, position):
+        print("SHOW REQUEST")
         node = self.tree_ui.get_current_node()
         if node:
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
@@ -457,6 +460,7 @@ class UaModeler(QMainWindow):
             return
         self.attrs_ui.save_state()
         self.refs_ui.save_state()
+        self.tree_ui.save_state()
         self.settings.setValue("main_window_width", self.size().width())
         self.settings.setValue("main_window_height", self.size().height())
         self.settings.setValue("main_window_state", self.saveState())
