@@ -20,4 +20,4 @@ install:
   - git clone https://github.com/FreeOpcUa/python-opcua.git 
   - git clone https://github.com/FreeOpcUa/opcua-widgets.git 
 # command to run tests
-script: python3 tests.py
+script: python tests.py
