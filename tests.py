@@ -28,7 +28,7 @@ class TestModelMgr(unittest.TestCase):
     def test_new_close(self):
         self.mgr.new_model()
         self.assertFalse(self.mgr.modified)
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         self.mgr.add_folder(1, "myfolder")
         self.assertTrue(self.mgr.modified)
         with self.assertRaises(RuntimeError):
@@ -39,7 +39,7 @@ class TestModelMgr(unittest.TestCase):
         path = "test_save_open.xml"
         val = 0.99
         self.mgr.new_model()
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         node = self.mgr.add_variable(1, "myvar", val)
         self.mgr.save_model(path)
         self.mgr.close_model()
@@ -68,25 +68,25 @@ class TestModeler(unittest.TestCase):
 
     def test_set_current_node(self):
         objects = self.modeler.get_current_server().nodes.objects
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         self.assertEqual(objects, self.modeler.tree_ui.get_current_node())
 
     def test_add_folder(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewNodeBaseDialog(self.modeler, "Add Folder", self.modeler.get_current_server())
         args = dia.get_args()
         new_node = self.mgr.add_folder(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_double(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=9.99, dtype=ua.ObjectIds.Double)
         args = dia.get_args()
         new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_double_list(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         val = [9.9, 5.5, 1.2]
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=val, dtype=ua.ObjectIds.Double)
         args = dia.get_args()
@@ -95,28 +95,28 @@ class TestModeler(unittest.TestCase):
         self.assertEqual(val, new_node.get_value())
 
     def test_add_variable_string(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value="lkjkl", dtype=ua.ObjectIds.String)
         args = dia.get_args()
         new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_extobj(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value="lkjkl", dtype=ua.ObjectIds.Structure)
         args = dia.get_args()
         new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_bytes(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=b"lkjkl", dtype=ua.ObjectIds.ByteString)
         args = dia.get_args()
         new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_float_fail(self):
-        self.modeler.tree_ui.set_current_node("Objects")
+        self.modeler.tree_ui.expand_to_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=b"lkjkl", dtype=ua.ObjectIds.Float)
         with self.assertRaises(ValueError):
             args = dia.get_args()
