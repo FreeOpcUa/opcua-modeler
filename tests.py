@@ -19,11 +19,11 @@ class TestModelMgr(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.modeler = UaModeler()
-        cls.mgr = cls.modeler.model_mgr
+        cls.mgr = cls.modeler.model_mgr._model_mgr
 
     @classmethod
     def tearDownClass(cls):
-        cls.mgr.close_model(force=True)
+        cls.mgr.close_model(True)
 
     def test_new_close(self):
         self.mgr.new_model()
@@ -58,6 +58,7 @@ class TestModeler(unittest.TestCase):
     def setUpClass(cls):
         cls.modeler = UaModeler()
         cls.modeler.ui.actionNew.activate(0)
+        cls.mgr = cls.modeler.model_mgr._model_mgr
         #modeler.show()
         #sys.exit(app.exec_())
 
@@ -74,14 +75,14 @@ class TestModeler(unittest.TestCase):
         self.modeler.tree_ui.set_current_node("Objects")
         dia = NewNodeBaseDialog(self.modeler, "Add Folder", self.modeler.get_current_server())
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_folder(*args)
+        new_node = self.mgr.add_folder(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_double(self):
         self.modeler.tree_ui.set_current_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=9.99, dtype=ua.ObjectIds.Double)
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_variable(*args)
+        new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_double_list(self):
@@ -89,7 +90,7 @@ class TestModeler(unittest.TestCase):
         val = [9.9, 5.5, 1.2]
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=val, dtype=ua.ObjectIds.Double)
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_variable(*args)
+        new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
         self.assertEqual(val, new_node.get_value())
 
@@ -97,21 +98,21 @@ class TestModeler(unittest.TestCase):
         self.modeler.tree_ui.set_current_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value="lkjkl", dtype=ua.ObjectIds.String)
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_variable(*args)
+        new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_extobj(self):
         self.modeler.tree_ui.set_current_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value="lkjkl", dtype=ua.ObjectIds.Structure)
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_variable(*args)
+        new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_bytes(self):
         self.modeler.tree_ui.set_current_node("Objects")
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=b"lkjkl", dtype=ua.ObjectIds.ByteString)
         args = dia.get_args()
-        new_node = self.modeler.model_mgr.add_variable(*args)
+        new_node = self.mgr.add_variable(*args)
         self.assertIn(new_node, self.modeler.get_current_server().nodes.objects.get_children())
 
     def test_add_variable_float_fail(self):
@@ -119,7 +120,7 @@ class TestModeler(unittest.TestCase):
         dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=b"lkjkl", dtype=ua.ObjectIds.Float)
         with self.assertRaises(ValueError):
             args = dia.get_args()
-            new_node = self.modeler.model_mgr.add_variable(*args)
+            new_node = self.mgr.add_variable(*args)
     
     def test_add_namespace(self):
         view = self.modeler.idx_ui.view

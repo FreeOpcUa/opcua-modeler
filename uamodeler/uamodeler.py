@@ -375,6 +375,12 @@ class UaModeler(QMainWindow):
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
 
+    def get_current_server(self):
+        """
+        Used by tests
+        """
+        return self.model_mgr.get_current_server()
+
     def clear_all_widgets(self):
         self.tree_ui.clear()
         self.refs_ui.clear()
