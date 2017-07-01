@@ -90,7 +90,7 @@ class ServerPython(object):
         # ensures correct idx for exported nodesets
         ns_node = self._server.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
         nss = ns_node.get_value()
-        ns_node.set_value(nss[1:])
+        ns_node.set_value(nss[:1])
         self._server.start()
 
     def stop_server(self):
