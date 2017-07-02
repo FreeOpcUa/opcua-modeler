@@ -1,4 +1,7 @@
 import logging
+import os
+import xml.etree.ElementTree as Et
+
 
 from PyQt5.QtCore import pyqtSignal, QObject, QSettings
 
@@ -11,12 +14,10 @@ from uawidgets.utils import trycatchslot
 
 from uamodeler.server_manager import ServerManager
 
-
 logger = logging.getLogger(__name__)
 
 
 class ModelManager(QObject):
-
     """
     Manage our model. loads xml, start and close, add nodes
     No dialogs at that level, only api
@@ -68,7 +69,7 @@ class ModelManager(QObject):
     def new_model(self):
         if self.modified:
             raise RuntimeError("Model is modified, cannot create new model")
-        del(self.new_nodes[:])  # empty list while keeping reference
+        del (self.new_nodes[:])  # empty list while keeping reference
 
         endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
         logger.info("Starting server on %s", endpoint)
@@ -92,7 +93,7 @@ class ModelManager(QObject):
         self.modeler.idx_ui.reload()
         return path
 
-    def open_model(self, path):
+    def open_xml(self, path):
         self.new_model()
         try:
             path = self.import_xml(path)
@@ -103,17 +104,61 @@ class ModelManager(QObject):
         self.current_path = path
         self.modeler.update_title(self.current_path)
 
-    def save_model(self, path=None):
-        if path is not None:
-            self.current_path = path
-            self.modeler.update_title(self.current_path)
-        logger.info("Saving to %s", self.current_path)
+    def open(self, path):
+        if path.endswith(".xml"):
+            self.open_xml(path)
+        else:
+            self.open_ua_model(path)
+
+    def open_ua_model(self, path):
+        self.new_model()
+        try:
+            tree = Et.parse(path)
+            root = tree.getroot()
+            for ref_el in root.findall("Reference"):
+                refpath = ref_el.attrib['path']
+                self.modeler.nodesets_ui.import_nodeset(refpath)
+            mod_el = root.find("Model")
+            xmlpath = mod_el.attrib['path']
+            self.open_xml(xmlpath)
+        except:
+            self.close_model(force=True)
+            raise
+        self.modified = False
+        self.current_path = path
+        self.modeler.update_title(self.current_path)
+
+    def _get_path(self, path):
+        if path is None:
+            path = self.current_path
+        if path is None:
+            raise ValueError("No path is defined")
+        self.current_path = os.path.splitext(path)[0] 
+        self.modeler.update_title(self.current_path)
+        return self.current_path
+
+    def save_xml(self, path=None):
+        path = self._get_path(path)
+        path += ".xml"
+        logger.info("Saving nodes to %s", path)
         logger.info("Exporting  %s nodes: %s", len(self.new_nodes), self.new_nodes)
         logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
         uris = self.server_mgr.get_namespace_array()[1:]
-        self.server_mgr.export_xml(self.new_nodes, uris, self.current_path)
+        self.server_mgr.export_xml(self.new_nodes, uris, path)
         self.modified = False
-        logger.info("%s saved", self.current_path)
+        logger.info("%s saved", path)
+
+    def save_ua_model(self, path=None):
+        path = self._get_path(path)
+        model_path = path + ".uamodel"
+        logger.info("Saving model to %s", model_path)
+        etree = Et.ElementTree(Et.Element('UAModel'))
+        node_el = Et.SubElement(etree.getroot(), "Model")
+        node_el.attrib["path"] = path + ".xml"
+        for refpath in self.modeler.nodesets_ui.nodesets:
+            node_el = Et.SubElement(etree.getroot(), "Reference")
+            node_el.attrib["path"] = refpath 
+        etree.write(model_path, encoding='utf-8', xml_declaration=True)
 
     def _after_add(self, new_nodes):
         if isinstance(new_nodes, (list, tuple)):
@@ -191,5 +236,3 @@ class ModelManager(QObject):
             self.modeler.tree_ui.update_browse_name_current_item(dv.Value.Value)
         elif attr == ua.AttributeIds.DisplayName:
             self.modeler.tree_ui.update_display_name_current_item(dv.Value.Value)
-
-

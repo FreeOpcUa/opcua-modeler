@@ -21,7 +21,6 @@ class RefNodeSetsWidget(QObject):
         self.view.setModel(self.model)
         self.nodesets = []
         self.server_mgr = None
-        self._nodeset_to_delete = None
         self.view.header().setSectionResizeMode(1)
         
         addNodeSetAction = QAction("Add Reference Node Set", self.model)
@@ -40,6 +39,9 @@ class RefNodeSetsWidget(QObject):
         path, ok = QFileDialog.getOpenFileName(self.view, caption="Import OPC UA XML Node Set", filter="XML Files (*.xml *.XML)", directory=".")
         if not ok:
             return None
+        self.import_nodeset(path)
+
+    def import_nodeset(self, path):
         name = os.path.basename(path)
         if name in self.nodesets:
             return

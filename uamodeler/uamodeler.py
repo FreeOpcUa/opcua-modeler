@@ -181,6 +181,9 @@ class ModelManagerUI(QObject):
     def get_new_nodes(self):
         return self._model_mgr.new_nodes
 
+    def setModified(self, val):
+        self.model_mgr.modified = val
+
     @trycatchslot
     def new(self):
         if not self.try_close_model():
@@ -224,13 +227,13 @@ class ModelManagerUI(QObject):
     def open(self):
         if not self.try_close_model():
             return
-        path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML)", directory=self._last_model_dir)
+        path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Open OPC UA XML", filter="XML Files (*.xml *.XML *.uamodel)", directory=self._last_model_dir)
         if not ok:
             return
         if self._last_model_dir != os.path.dirname(path):
             self._last_model_dir = os.path.dirname(path)
             self.settings.setValue("last_model_dir", self._last_model_dir)
-        self._model_mgr.open_model(path)
+        self._model_mgr.open(path)
 
     @trycatchslot
     def import_xml(self):
@@ -248,26 +251,19 @@ class ModelManagerUI(QObject):
     def _save_as(self):
         path, ok = QFileDialog.getSaveFileName(self.modeler, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
-            if os.path.isfile(path):
-                reply = QMessageBox.question(
-                    self.modeler,
-                    "OPC UA Modeler",
-                    "File already exit, do you really want to save to this file?",
-                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
-                )
-                if reply != QMessageBox.Yes:
-                    return
             if self._last_model_dir != os.path.dirname(path):
                 self._last_model_dir = os.path.dirname(path)
                 self.settings.setValue("last_model_dir", self._last_model_dir)
-            self._model_mgr.save_model(path)
+            self._model_mgr.save_xml(path)
+            self._model_mgr.save_ua_model(path)
 
     @trycatchslot
     def save(self):
         if not self._model_mgr.current_path:
             self.save_as()
         else:
-            self._model_mgr.save_model()
+            self._model_mgr.save_xml()
+            self._model_mgr.save_ua_model()
 
     @trycatchslot
     def add_method(self):
@@ -460,6 +456,7 @@ class UaModeler(QMainWindow):
         self.tree_ui.reload()
         self.refs_ui.clear()
         self.attrs_ui.clear()
+        self.model_mgr.setModified(True)
 
     def closeEvent(self, event):
         if not self.model_mgr.try_close_model():
