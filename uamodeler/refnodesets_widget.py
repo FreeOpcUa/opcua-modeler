@@ -42,6 +42,7 @@ class RefNodeSetsWidget(QObject):
         self.import_nodeset(path)
 
     def import_nodeset(self, path):
+        print("IMPORT", path)
         name = os.path.basename(path)
         if name in self.nodesets:
             return

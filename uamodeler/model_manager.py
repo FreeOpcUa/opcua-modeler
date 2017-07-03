@@ -96,10 +96,13 @@ class ModelManager(QObject):
     def open_xml(self, path):
         self.new_model()
         try:
-            path = self.import_xml(path)
+            self._open_xml(path)
         except:
             self.close_model(force=True)
             raise
+
+    def _open_xml(self, path):
+        path = self.import_xml(path)
         self.modified = False
         self.current_path = path
         self.modeler.update_title(self.current_path)
@@ -113,20 +116,20 @@ class ModelManager(QObject):
     def open_ua_model(self, path):
         self.new_model()
         try:
-            tree = Et.parse(path)
-            root = tree.getroot()
-            for ref_el in root.findall("Reference"):
-                refpath = ref_el.attrib['path']
-                self.modeler.nodesets_ui.import_nodeset(refpath)
-            mod_el = root.find("Model")
-            xmlpath = mod_el.attrib['path']
-            self.open_xml(xmlpath)
+            self._open_ua_model(path)
         except:
             self.close_model(force=True)
             raise
-        self.modified = False
-        self.current_path = path
-        self.modeler.update_title(self.current_path)
+
+    def _open_ua_model(self, path):
+        tree = Et.parse(path)
+        root = tree.getroot()
+        for ref_el in root.findall("Reference"):
+            refpath = ref_el.attrib['path']
+            self.modeler.nodesets_ui.import_nodeset(refpath)
+        mod_el = root.find("Model")
+        xmlpath = mod_el.attrib['path']
+        self._open_xml(xmlpath)
 
     def _get_path(self, path):
         if path is None:
