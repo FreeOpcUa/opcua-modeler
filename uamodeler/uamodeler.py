@@ -165,12 +165,14 @@ class ModelManagerUI(QObject):
     """
 
     error = pyqtSignal(Exception)
+    titleChanged = pyqtSignal(str)
 
     def __init__(self, modeler):
         QObject.__init__(self)
         self.modeler = modeler
         self._model_mgr = ModelManager(modeler)
         self._model_mgr.error.connect(self.error)
+        self._model_mgr.titleChanged.connect(self.titleChanged)
         self.settings = QSettings()
         self._last_model_dir = self.settings.value("last_model_dir", ".")
         self._copy_clipboard = None
@@ -181,8 +183,8 @@ class ModelManagerUI(QObject):
     def get_new_nodes(self):
         return self._model_mgr.new_nodes
 
-    def setModified(self, val):
-        self.model_mgr.modified = val
+    def setModified(self, val=True):
+        self._model_mgr.modified = val
 
     @trycatchslot
     def new(self):
@@ -360,6 +362,7 @@ class UaModeler(QMainWindow):
 
         self.model_mgr = ModelManagerUI(self)
         self.model_mgr.error.connect(self.show_error)
+        self.model_mgr.titleChanged.connect(self.update_title)
         self.actions = ActionsManager(self.ui, self.model_mgr)
 
         self.setup_context_menu_tree()
@@ -424,6 +427,7 @@ class UaModeler(QMainWindow):
         self.ui.splitterLeft.restoreState(self.settings.value("splitter_left", bytearray()))
         self.ui.splitterRight.restoreState(self.settings.value("splitter_right", bytearray()))
         self.ui.splitterCenter.restoreState(self.settings.value("splitter_center", bytearray()))
+
     def update_title(self, path):
         self.setWindowTitle("FreeOpcUa Modeler " + str(path))
 

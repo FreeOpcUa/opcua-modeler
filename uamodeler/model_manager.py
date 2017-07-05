@@ -24,6 +24,8 @@ class ModelManager(QObject):
     """
 
     error = pyqtSignal(Exception)
+    titleChanged = pyqtSignal(str)
+    modelChanged = pyqtSignal()
 
     def __init__(self, modeler):
         QObject.__init__(self, modeler)
@@ -63,7 +65,7 @@ class ModelManager(QObject):
         self.server_mgr.stop_server()
         self.current_path = None
         self.modified = False
-        self.modeler.update_title("")
+        self.titleChanged.emit("")
         self.modeler.clear_all_widgets()
 
     def new_model(self):
@@ -81,7 +83,7 @@ class ModelManager(QObject):
         self.modified = False
         self.modeler.actions.enable_model_actions()
         self.current_path = None
-        self.modeler.update_title("No Name")
+        self.titleChanged.emit("No Name")
         return True
 
     def import_xml(self, path):
@@ -105,7 +107,7 @@ class ModelManager(QObject):
         path = self.import_xml(path)
         self.modified = False
         self.current_path = path
-        self.modeler.update_title(self.current_path)
+        self.titleChanged.emit(self.current_path)
 
     def open(self, path):
         if path.endswith(".xml"):
@@ -137,7 +139,7 @@ class ModelManager(QObject):
         if path is None:
             raise ValueError("No path is defined")
         self.current_path = os.path.splitext(path)[0] 
-        self.modeler.update_title(self.current_path)
+        self.titleChanged.emit(self.current_path)
         return self.current_path
 
     def save_xml(self, path=None):
