@@ -35,21 +35,39 @@ class TestModelMgr(unittest.TestCase):
             self.mgr.close_model()
         self.mgr.close_model(force=True)
 
-    def test_save_open(self):
+    def test_save_open_xml(self):
         path = "test_save_open.xml"
         val = 0.99
         self.mgr.new_model()
         self.modeler.tree_ui.expand_to_node("Objects")
         node = self.mgr.add_variable(1, "myvar", val)
-        self.mgr.save_model(path)
+        self.mgr.save_xml(path)
         self.mgr.close_model()
         with self.assertRaises(Exception):
             node = self.mgr.server_mgr.get_node(node.nodeid)
             node.get_value()
-        self.mgr.open_model(path)
+        self.mgr.open(path)
         node = self.mgr.server_mgr.get_node(node.nodeid)
         self.assertEqual(node.get_value(), val)
         self.mgr.close_model()
+
+    def test_save_open_ua_model(self):
+        path = "test_save_open.uamodel"
+        val = 0.99
+        self.mgr.new_model()
+        self.modeler.tree_ui.expand_to_node("Objects")
+        node = self.mgr.add_variable(1, "myvar", val)
+        self.mgr.save_ua_model(path)
+        self.mgr.save_xml(path)
+        self.mgr.close_model()
+        with self.assertRaises(Exception):
+            node = self.mgr.server_mgr.get_node(node.nodeid)
+            node.get_value()
+        self.mgr.open(path)
+        node = self.mgr.server_mgr.get_node(node.nodeid)
+        self.assertEqual(node.get_value(), val)
+        self.mgr.close_model()
+
 
 
 class TestModeler(unittest.TestCase):
