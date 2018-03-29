@@ -103,11 +103,17 @@ class ActionsManager(object):
             return
         path = node.get_path()
         nodeclass = node.get_node_class()
+        typedefinition = node.get_type_definition()
 
         self.ui.actionCopy.setEnabled(True)
         self.ui.actionDelete.setEnabled(True)
 
+        if typedefinition == ua.NodeId(ua.ObjectIds.PropertyType):
+            return
+
         if nodeclass == ua.NodeClass.Variable:
+            self.ui.actionAddVariable.setEnabled(True)
+            self.ui.actionAddProperty.setEnabled(True)
             return
 
         self.ui.actionPaste.setEnabled(True)
