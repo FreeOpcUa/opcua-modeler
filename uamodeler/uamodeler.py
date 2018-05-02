@@ -277,7 +277,8 @@ class ModelManagerUI(QObject):
     def add_method(self):
         args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self._model_mgr.server_mgr)
         if ok:
-            self._model_mgr.add_method(*args)
+            nodes = self._model_mgr.add_method(*args)
+            self._add_modelling_rule(nodes)
 
     @trycatchslot
     def add_object_type(self):
@@ -289,34 +290,49 @@ class ModelManagerUI(QObject):
     def add_folder(self):
         args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Folder", self._model_mgr.server_mgr)
         if ok:
-            self._model_mgr.add_folder(*args)
+            node = self._model_mgr.add_folder(*args)
+            self._add_modelling_rule(node)
 
     @trycatchslot
     def add_object(self):
         args, ok = NewUaObjectDialog.getArgs(self.modeler, "Add Object", self._model_mgr.server_mgr, base_node_type=self._model_mgr.server_mgr.nodes.base_object_type)
         if ok:
-            self._model_mgr.add_object(*args)
+            nodes = self._model_mgr.add_object(*args)
+            # FIXME: in this particular case we may want to navigate recursively to add ref
+            self._add_modelling_rule(nodes)
+
+    def _add_modelling_rule(self, node):
+        if isinstance(node, (list, tuple)) and node:
+            node = node[0]
+        path = node.get_path()
+        print("PATH", path)
+        if self._model_mgr.server_mgr.nodes.base_object_type in path:
+            print("MAKING MODELLING RULE")
+            # we are creating a new type, add modeling rule
+            node.set_modelling_rule(True)
 
     @trycatchslot
     def add_data_type(self):
         args, ok = NewNodeBaseDialog.getArgs(self.modeler, "Add Data Type", self._model_mgr.server_mgr)
         if ok:
             self._model_mgr.add_data_type(*args)
-    
+
     @trycatchslot
     def add_variable(self):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Variable", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self._model_mgr.add_variable(*args)
+            node = self._model_mgr.add_variable(*args)
             self.settings.setValue("last_datatype", args[4])
+            self._add_modelling_rule(node)
 
     @trycatchslot
     def add_property(self):
         dtype = self.settings.value("last_datatype", None)
         args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Property", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
         if ok:
-            self._model_mgr.add_property(*args)
+            node = self._model_mgr.add_property(*args)
+            self._add_modelling_rule(node)
 
     @trycatchslot
     def add_variable_type(self):
@@ -346,7 +362,7 @@ class UaModeler(QMainWindow):
         self.settings = QSettings()
 
         self._restore_ui_geometri()
-        
+
         self.tree_ui = TreeWidget(self.ui.treeView)
         self.tree_ui.error.connect(self.show_error)
 

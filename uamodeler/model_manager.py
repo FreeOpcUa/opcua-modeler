@@ -182,12 +182,14 @@ class ModelManager(QObject):
         new_nodes.append(new_node)
         new_nodes.extend(new_node.get_children())
         self._after_add(new_nodes)
+        return new_nodes
 
     def add_object_type(self, *args):
         logger.info("Creating object type with args: %s", args)
         parent = self.modeler.tree_ui.get_current_node()
         new_node = parent.add_object_type(*args)
         self._after_add(new_node)
+        return new_node
 
     def add_folder(self, *args):
         parent = self.modeler.tree_ui.get_current_node()
