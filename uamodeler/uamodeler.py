@@ -278,6 +278,7 @@ class ModelManagerUI(QObject):
         args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self._model_mgr.server_mgr)
         if ok:
             nodes = self._model_mgr.add_method(*args)
+            print("ADDED", [c.get_browse_name() for c in nodes])
             self._add_modelling_rule(nodes)
 
     @trycatchslot
@@ -301,15 +302,14 @@ class ModelManagerUI(QObject):
             # FIXME: in this particular case we may want to navigate recursively to add ref
             self._add_modelling_rule(nodes)
 
-    def _add_modelling_rule(self, node):
-        if isinstance(node, (list, tuple)) and node:
-            node = node[0]
-        path = node.get_path()
-        print("PATH", path)
-        if self._model_mgr.server_mgr.nodes.base_object_type in path:
-            print("MAKING MODELLING RULE")
-            # we are creating a new type, add modeling rule
-            node.set_modelling_rule(True)
+    def _add_modelling_rule(self, nodes):
+        if not isinstance(nodes, (list, tuple)):
+            nodes = [nodes]
+        for node in nodes:
+            path = node.get_path()
+            if self._model_mgr.server_mgr.nodes.base_object_type in path:
+                # we are creating a new type, add modeling rule
+                node.set_modelling_rule(True)
 
     @trycatchslot
     def add_data_type(self):
@@ -436,7 +436,6 @@ class UaModeler(QMainWindow):
         self._contextMenu.addAction(self.ui.actionAddDataType)
 
     def _show_context_menu_tree(self, position):
-        print("SHOW REQUEST")
         node = self.tree_ui.get_current_node()
         if node:
             self._contextMenu.exec_(self.ui.treeView.viewport().mapToGlobal(position))
