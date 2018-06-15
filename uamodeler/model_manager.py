@@ -130,7 +130,8 @@ class ModelManager(QObject):
             refpath = ref_el.attrib['path']
             self.modeler.nodesets_ui.import_nodeset(refpath)
         mod_el = root.find("Model")
-        xmlpath = mod_el.attrib['path']
+        dirname = os.path.dirname(path)
+        xmlpath = os.path.join(dirname, mod_el.attrib['path'])
         self._open_xml(xmlpath)
 
     def _get_path(self, path):
@@ -159,10 +160,10 @@ class ModelManager(QObject):
         logger.info("Saving model to %s", model_path)
         etree = Et.ElementTree(Et.Element('UAModel'))
         node_el = Et.SubElement(etree.getroot(), "Model")
-        node_el.attrib["path"] = path + ".xml"
+        node_el.attrib["path"] = os.path.basename(path) + ".xml"
         for refpath in self.modeler.nodesets_ui.nodesets:
             node_el = Et.SubElement(etree.getroot(), "Reference")
-            node_el.attrib["path"] = refpath 
+            node_el.attrib["path"] = refpath
         etree.write(model_path, encoding='utf-8', xml_declaration=True)
 
     def _after_add(self, new_nodes):
