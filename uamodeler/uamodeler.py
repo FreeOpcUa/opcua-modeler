@@ -128,6 +128,8 @@ class ActionsManager(object):
             self.ui.actionAddDataType.setEnabled(True)
             if self.model_mgr.get_current_server().nodes.enum_data_type in path:
                 self.ui.actionAddProperty.setEnabled(True)
+            elif self.model_mgr.get_current_server().nodes.base_structure_type in path:
+                self.ui.actionAddVariable.setEnabled(True)
             return  # not other nodes should be added here
 
         self.ui.actionAddFolder.setEnabled(True)
