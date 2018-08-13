@@ -10,7 +10,7 @@ from opcua import ua
 from opcua import copy_node
 from opcua import Node
 from opcua.common.instantiate import instantiate
-from opcua.common.ua_utils import get_node_children
+from opcua.common.ua_utils import get_node_children, data_type_to_variant_type
 from opcua.common.structures import Struct, StructGenerator
 from opcua.common.xmlexporter import indent
 
@@ -20,6 +20,12 @@ from uamodeler.server_manager import ServerManager
 
 logger = logging.getLogger(__name__)
 
+
+class _Struct(object):
+    def __init__(self, name, typename):
+        self.name = name
+        self.typename = typename
+        self.fields = []
 
 class ModelManager(QObject):
     """
@@ -109,6 +115,8 @@ class ModelManager(QObject):
 
     def _open_xml(self, path):
         path = self.import_xml(path)
+        self.server_mgr.load_enums()
+        self.server_mgr.load_type_definitions()
         self._show_structs()
         self.modified = False
         self.current_path = path
@@ -117,11 +125,20 @@ class ModelManager(QObject):
     def _show_structs(self):
         base_struct = self.server_mgr.get_node(ua.ObjectIds.Structure)
         opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
-        for desc in opc_binary.get_children_descriptions():
-            if desc.BrowseName == ua.QualifiedName("Opc.Ua"):
-                continue
-            node = self.server_mgr.get_node(desc.NodeId)
+        opc_schema = self.server_mgr.get_node(ua.ObjectIds.OpcUa_BinarySchema)
+        for node in opc_binary.get_children():
+            if node == opc_schema:
+                continue  # This is standard namespace structures
+            try:
+                ns = node.get_child("0:NamespaceUri").get_value()
+                ar = self.server_mgr.get_namespace_array()
+                idx = ar.index(ns)
+            except ua.UaError:
+                idx = 1
             xml = node.get_value()
+            if not xml:
+                return
+
             xml = xml.decode("utf-8")
             print("XML", xml)
             generator = StructGenerator()
@@ -135,7 +152,25 @@ class ModelManager(QObject):
                         logger.warning("Could not find struct %s under %s", el.name, base_struct)
                         continue
                     for field in el.fields:
-                        struct_node.add_variable(0, field.name, field.value, field.uatype)
+                        if hasattr(ua.ObjectIds, field.uatype):
+                            dtype = self.server_mgr.get_node(getattr(ua.ObjectIds, field.uatype))
+                        else:
+                            dtype = self._get_datatype_from_string(idx, field.uatype)
+                            if not dtype:
+                                logger.warning("Could not find datatype of name %s %s", field.uatype, type(field.uatype))
+                                continue
+                        vtype = data_type_to_variant_type(dtype)
+                        new = struct_node.add_variable(1, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
+
+    def _get_datatype_from_string(self, idx, name):
+        #FIXME: this is very heavy and missing recusion, what is the correct way to do that?
+        for node in self.server_mgr.get_node(ua.ObjectIds.BaseDataType).get_children():
+            try:
+                dtype = node.get_child(f'{idx}:{name}')
+            except ua.UaError:
+                continue
+            return dtype
+        return None
 
     def open(self, path):
         if path.endswith(".xml"):
@@ -275,9 +310,36 @@ class ModelManager(QObject):
             self.modeler.tree_ui.update_display_name_current_item(dv.Value.Value)
 
     def _save_structs(self):
-        opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
-        urn = "urn:toot"
-        name = "MyStructs"
+        struct_node = self.server_mgr.get_node(ua.ObjectIds.Structure)
+        structs = []
+        for node in self.new_nodes:
+            # FIXME: we do not support inheritance
+            parent = node.get_parent()
+            if parent == struct_node:
+                bname = node.get_browse_name()
+                st = _Struct(bname.Name, "ExtensionObject")
+                childs = node.get_children()
+                for child in childs:
+                    bname = child.get_browse_name()
+                    try:
+                        dtype = child.get_data_type()
+                    except ua.UaError:
+                        logger.warning("could not get data type for node %s, %s, skipping", child, child.get_browse_name())
+                        continue
+                    dtype_name = Node(node.server, dtype).get_browse_name()
+                    st.fields.append([bname.Name, dtype_name.Name])
+                    if child in self.new_nodes:
+                        self.new_nodes.remove(child)
+                structs.append(st)
+
+        if structs:
+            self._save_bsd(structs)
+
+    def _save_bsd(self, structs):
+        logger.warning("Structs %s", structs)
+        idx = 1 
+        urn = self.server_mgr.get_namespace_array()[1]
+        dict_name = "TypeDictionary"
 
         node_set_attributes = OrderedDict()
         node_set_attributes['xmlns:opc'] = "http://opcfoundation.org/BinarySchema/"
@@ -291,23 +353,24 @@ class ModelManager(QObject):
         root_el = etree.getroot()
 
         Et.SubElement(root_el, 'opc:Import', {'Namespace': "http://opcfoundation.org/UA/", 'Location': 'Opc.Ua.BinarySchema.bsd'})
-        for node in opc_binary.get_children():
-            bname = node.get_browse_name()
-            struct_el = Et.SubElement(root_el, 'opc:StructuredType', {'Name': bname.Name, 'BaseType': 'ua.ExtensionObject'})
-            childs = node.get_children()
-            for child in childs:
-                bname = child.get_browse_name()
-                try:
-                    dtype = child.get_data_type()
-                except ua.UaError:
-                    logger.warning("could not get data type for node", child, child.get_browse_name())
-                    continue
-                dtype_name = Node(node.server, dtype).get_browse_name()
-                Et.SubElement(struct_el, 'opc:Field', {'Name': bname.Name, 'TypeName': 'Opc:' + dtype_name.Name})
+        for struct in structs:
+            struct_el = Et.SubElement(root_el, 'opc:StructuredType', {'Name': struct.name, 'BaseType': 'ua' + struct.typename})
+            for name, typename in struct.fields:
+                if typename in ua.ObjectIdNames:
+                    prefix = "opc"
+                else:
+                    prefix = "tns"
+                Et.SubElement(struct_el, 'opc:Field', {'Name': name, 'TypeName': prefix + ":" + typename})
 
         val = Et.tostring(root_el, encoding='utf-8')
-        new_node = opc_binary.add_variable(1, name, val, ua.VariantType.ByteString)
-        self._after_add(new_node)
+        opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
+        try:
+            dict_node = opc_binary.get_child(f'{idx}:{dict_name}')
+            dict_node.set_value(val)
+        except ua.UaError:
+            dict_node = opc_binary.add_variable(1, dict_name, val, ua.VariantType.ByteString)
+            self._after_add(dict_node)
+        #FIXME: add struct node under dict_node
         # for debug
         indent(root_el)
         etree.write('toto.bsd', encoding='utf-8', xml_declaration=True)

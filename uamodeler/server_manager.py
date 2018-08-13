@@ -70,6 +70,12 @@ class ServerManager(object):
     def export_xml(self, nodes, uris, path):
         return self._backend.export_xml(nodes, uris, path)
 
+    def load_type_definitions(self):
+        return self._backend.load_type_definitions()
+
+    def load_enums(self):
+        return self._backend.load_enums()
+
 
 class ServerPython(object):
     def __init__(self):
@@ -86,6 +92,8 @@ class ServerPython(object):
         self.nodes = self._server.nodes
         self.get_node = self._server.get_node
         self.get_namespace_array = self._server.get_namespace_array
+        self.load_type_definitions = self._server.load_type_definitions
+        self.load_enums = self._server.load_enums
         # now remove freeopcua namespace, not necessary when modeling and
         # ensures correct idx for exported nodesets
         ns_node = self._server.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
