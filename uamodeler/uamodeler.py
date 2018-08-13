@@ -469,14 +469,16 @@ class UaModeler(QMainWindow):
     @trycatchslot
     def show_refs(self, idx=None):
         node = self.get_current_node(idx)
-        self.refs_ui.show_refs(node)
+        if node:
+            self.refs_ui.show_refs(node)
 
     @trycatchslot
     def show_attrs(self, idx=None):
         if not isinstance(idx, QModelIndex):
             idx = None
         node = self.get_current_node(idx)
-        self.attrs_ui.show_attrs(node)
+        if node:
+            self.attrs_ui.show_attrs(node)
 
     def nodesets_change(self, data):
         self.idx_ui.reload()
