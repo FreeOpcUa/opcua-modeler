@@ -233,9 +233,12 @@ class ModelManager(QObject):
 
     def _after_add(self, new_nodes):
         if isinstance(new_nodes, (list, tuple)):
-            self.new_nodes.extend(new_nodes)
+            for node in new_nodes:
+                if node not in self.new_nodes:
+                    self.new_nodes.append(node)
         else:
-            self.new_nodes.append(new_nodes)
+            if new_nodes not in self.new_nodes:
+                self.new_nodes.append(new_nodes)
         self.modeler.tree_ui.reload_current()
         self.modeler.show_refs()
         self.modified = True
@@ -365,16 +368,37 @@ class ModelManager(QObject):
 
         val = Et.tostring(root_el, encoding='utf-8')
         opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
-        try:
-            dict_node = opc_binary.get_child(f'{idx}:{dict_name}')
-            dict_node.set_value(val)
-        except ua.UaError:
-            dict_node = opc_binary.add_variable(idx, dict_name, val, ua.VariantType.ByteString)
-            self._after_add(dict_node)
-        #FIXME: add struct node under dict_node
+        dict_node = self._set_or_add_variable(opc_binary, idx, dict_name, val, ua.VariantType.ByteString)
+
+        # add struct and namespace nodes under dict_node
+        self._create_typedictonary_children(dict_node, idx, urn, [struct.name for struct in structs])
+
         # for debug
         indent(root_el)
         etree.write('toto.bsd', encoding='utf-8', xml_declaration=True)
-     
 
+    def _create_typedictonary_children(self, typenode, idx, urn, structs):
+        self._set_or_add_variable(typenode, idx, "NamespaceUri", urn, varianttype=ua.VariantType.String, isproperty=True)
+        for name in structs:
+            node = self._set_or_add_variable(typenode, idx, name, name, varianttype=ua.VariantType.String, isproperty=True)
+            ref_desc_list = node.get_references(refs=ua.ObjectIds.HasDescription, direction=ua.BrowseDirection.Inverse)
+            if not ref_desc_list:
+                # we need to add description
+                node.add_reference(ua.ObjectIds.DataTypeEncodingType, ua.ObjectIds.HasDescription, forward=False, bidirectional=True)
+                #FIXME: link is bidirectional... this is not going to be saved or??
+
+    def _set_or_add_variable(self, parent, idx, name, val, varianttype, isproperty=False, save=True):
+        try:
+            print("trying get", f'{idx}:{name}')
+            node = parent.get_child(f'{idx}:{name}')
+            node.set_value(val, varianttype=varianttype)
+        except ua.UaError:
+            print("NOT FOUND CREATING", idx, name, val)
+            if isproperty:
+                node = parent.add_property(idx, name, val, varianttype=varianttype)
+            else:
+                node = parent.add_variable(idx, name, val, varianttype=varianttype)
+        if save:
+            self._after_add(node)
+        return node
 
