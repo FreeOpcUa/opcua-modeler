@@ -146,21 +146,24 @@ class ModelManager(QObject):
             for el in generator.model:
                 # we only care about structs, ignoring enums
                 if isinstance(el, Struct):
-                    try:
-                        struct_node = base_struct.get_child(f"{idx}:{el.name}")
-                    except ua.UaError:
-                        logger.warning("Could not find struct %s under %s", el.name, base_struct)
-                        continue
-                    for field in el.fields:
-                        if hasattr(ua.ObjectIds, field.uatype):
-                            dtype = self.server_mgr.get_node(getattr(ua.ObjectIds, field.uatype))
-                        else:
-                            dtype = self._get_datatype_from_string(idx, field.uatype)
-                            if not dtype:
-                                logger.warning("Could not find datatype of name %s %s", field.uatype, type(field.uatype))
-                                continue
-                        vtype = data_type_to_variant_type(dtype)
-                        new = struct_node.add_variable(idx, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
+                    self._add_design_node(base_struct, idx, el)
+
+    def _add_design_node(self, base_struct, idx, el):
+        try:
+            struct_node = base_struct.get_child(f"{idx}:{el.name}")
+        except ua.UaError:
+            logger.warning("Could not find struct %s under %s", el.name, base_struct)
+            return
+        for field in el.fields:
+            if hasattr(ua.ObjectIds, field.uatype):
+                dtype = self.server_mgr.get_node(getattr(ua.ObjectIds, field.uatype))
+            else:
+                dtype = self._get_datatype_from_string(idx, field.uatype)
+                if not dtype:
+                    logger.warning("Could not find datatype of name %s %s", field.uatype, type(field.uatype))
+                    return
+            vtype = data_type_to_variant_type(dtype)
+            struct_node.add_variable(idx, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
 
     def _get_datatype_from_string(self, idx, name):
         #FIXME: this is very heavy and missing recusion, what is the correct way to do that?
@@ -379,10 +382,6 @@ class ModelManager(QObject):
         # add struct and namespace nodes under dict_node
         self._create_typedictonary_children(dict_node, idx, urn, [struct.name for struct in structs])
 
-        # for debug
-        indent(root_el)
-        etree.write('toto.bsd', encoding='utf-8', xml_declaration=True)
-
     def _create_typedictonary_children(self, typenode, idx, urn, structs):
         self._set_or_add_variable(typenode, idx, "NamespaceUri", urn, varianttype=ua.VariantType.String, isproperty=True)
         for name in structs:
@@ -395,11 +394,9 @@ class ModelManager(QObject):
 
     def _set_or_add_variable(self, parent, idx, name, val, varianttype, isproperty=False, save=True):
         try:
-            print("trying get", f'{idx}:{name}')
             node = parent.get_child(f'{idx}:{name}')
             node.set_value(val, varianttype=varianttype)
         except ua.UaError:
-            print("NOT FOUND CREATING", idx, name, val)
             if isproperty:
                 node = parent.add_property(idx, name, val, varianttype=varianttype)
             else:

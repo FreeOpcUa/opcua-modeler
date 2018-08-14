@@ -84,10 +84,15 @@ class TestModelMgr(unittest.TestCase):
         mystruct = self.mgr.add_data_type(1, "MyStruct")
         var1 = mystruct.add_variable(1, "MyFloat", 0.1, varianttype=ua.VariantType.Float)
         var2 = mystruct.add_variable(1, "MyBytes", b'lkjlk', varianttype=ua.VariantType.ByteString)
-        self.mgr._save_structs()
+        self.mgr.save_xml(path)
         self.assertEqual(len(self.mgr.new_nodes), 4)  # one struct + TypeDictionary node + namespace and struct node under typedict
 
         # FIXME: test for presence of nodes under typedict for every new struct
+        opc_binary = self.mgr.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
+        typedict = opc_binary.get_child("1:TypeDictionary")
+        xml = typedict.get_value()
+        self.assertIn(b"MyFloat", xml)
+        self.assertIn(b"MyStruct", xml)
 
         self.mgr.save_xml(path)
         self.mgr.close_model()
@@ -96,6 +101,7 @@ class TestModelMgr(unittest.TestCase):
         opc_binary = self.mgr.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
         typedict = opc_binary.get_child("1:TypeDictionary")
         xml = typedict.get_value()
+
         self.assertIn(b"MyFloat", xml)
         self.assertIn(b"MyStruct", xml)
 
