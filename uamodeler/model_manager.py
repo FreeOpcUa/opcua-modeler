@@ -52,7 +52,7 @@ class ModelManager(QObject):
         if node:
             nodes = get_node_children(node)
             for n in nodes:
-                n.delete()
+                n.delete(delete_references=True, recursive=True)
                 if n in self.new_nodes:
                     self.new_nodes.remove(n)
             self.modeler.tree_ui.remove_current_item()
@@ -141,7 +141,6 @@ class ModelManager(QObject):
                 return
 
             xml = xml.decode("utf-8")
-            print("XML", xml)
             generator = StructGenerator()
             generator.make_model_from_string(xml)
             for el in generator.model:
@@ -218,6 +217,7 @@ class ModelManager(QObject):
         self.server_mgr.export_xml(self.new_nodes, uris, path)
         self.modified = False
         logger.info("%s saved", path)
+        self._show_structs()  #_save_structs has delete our design nodes for structure, we need to recreate them
 
     def save_ua_model(self, path=None):
         path = self._get_path(path)
@@ -314,8 +314,12 @@ class ModelManager(QObject):
             self.modeler.tree_ui.update_display_name_current_item(dv.Value.Value)
 
     def _save_structs(self):
+        """
+        Save struct and delete our design nodes. They will need to be recreated
+        """
         struct_node = self.server_mgr.get_node(ua.ObjectIds.Structure)
         structs = []
+        to_delete = []
         for node in self.new_nodes:
             # FIXME: we do not support inheritance
             parent = node.get_parent()
@@ -332,12 +336,14 @@ class ModelManager(QObject):
                         continue
                     dtype_name = Node(node.server, dtype).get_browse_name()
                     st.fields.append([bname.Name, dtype_name.Name])
-                    if child in self.new_nodes:
-                        self.new_nodes.remove(child)
+                    to_delete.append(child)
                 structs.append(st)
 
         if structs:
             self._save_bsd(structs)
+
+        for node in to_delete:
+            node.delete()
 
     def _save_bsd(self, structs):
         logger.warning("Structs %s", structs)
