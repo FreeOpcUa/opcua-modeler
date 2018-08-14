@@ -85,7 +85,7 @@ class TestModelMgr(unittest.TestCase):
         var1 = mystruct.add_variable(1, "MyFloat", 0.1, varianttype=ua.VariantType.Float)
         var2 = mystruct.add_variable(1, "MyBytes", b'lkjlk', varianttype=ua.VariantType.ByteString)
         self.mgr._save_structs()
-        self.assertEqual(len(self.mgr.new_nodes), 2)  # 2 since we created one struct + TypeDictionary node
+        self.assertEqual(len(self.mgr.new_nodes), 4)  # one struct + TypeDictionary node + namespace and struct node under typedict
 
         # FIXME: test for presence of nodes under typedict for every new struct
 
@@ -101,6 +101,12 @@ class TestModelMgr(unittest.TestCase):
 
         struct_node = self.mgr.server_mgr.get_node(ua.ObjectIds.Structure)
         struct_node.get_child("1:MyStruct")
+
+        self.mgr.server_mgr.load_type_definitions()
+
+        st = ua.MyStruct()
+        self.assertTrue(hasattr(st, "MyFloat"))
+        st.MyBytes = b"klk"
 
 
 
