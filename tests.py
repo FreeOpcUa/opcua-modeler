@@ -68,6 +68,40 @@ class TestModelMgr(unittest.TestCase):
         self.assertEqual(node.get_value(), val)
         self.mgr.close_model()
 
+    def test_structs(self):
+        self.mgr.new_model()
+
+        urns = self.modeler.get_current_server().get_namespace_array()
+        ns_node = self.mgr.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray)
+        urns = ns_node.get_value()
+        urns.append("urn://modeller/testing")
+        ns_node.set_value(urns)
+
+        path = "test_save_structs.xml"
+
+        struct_node = self.mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+        self.modeler.tree_ui.expand_to_node(struct_node)
+        mystruct = self.mgr.add_data_type(1, "MyStruct")
+        var1 = mystruct.add_variable(1, "MyFloat", 0.1, varianttype=ua.VariantType.Float)
+        var2 = mystruct.add_variable(1, "MyBytes", b'lkjlk', varianttype=ua.VariantType.ByteString)
+        self.mgr._save_structs()
+        self.assertEqual(len(self.mgr.new_nodes), 2)  # 2 since we created one struct + TypeDictionary node
+
+        # FIXME: test for presence of nodes under typedict for every new struct
+
+        self.mgr.save_xml(path)
+        self.mgr.close_model()
+        self.mgr.open_xml(path)
+
+        opc_binary = self.mgr.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
+        typedict = opc_binary.get_child("1:TypeDictionary")
+        xml = typedict.get_value()
+        self.assertIn(b"MyFloat", xml)
+        self.assertIn(b"MyStruct", xml)
+
+        struct_node = self.mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+        struct_node.get_child("1:MyStruct")
+
 
 
 class TestModeler(unittest.TestCase):
@@ -88,6 +122,11 @@ class TestModeler(unittest.TestCase):
         objects = self.modeler.get_current_server().nodes.objects
         self.modeler.tree_ui.expand_to_node("Objects")
         self.assertEqual(objects, self.modeler.tree_ui.get_current_node())
+
+    def test_set_current_node_nodeid(self):
+        struct_node = self.mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+        self.modeler.tree_ui.expand_to_node(struct_node)
+        self.assertEqual(struct_node, self.modeler.tree_ui.get_current_node())
 
     def test_add_folder(self):
         self.modeler.tree_ui.expand_to_node("Objects")
@@ -135,7 +174,7 @@ class TestModeler(unittest.TestCase):
 
     def test_add_variable_float_fail(self):
         self.modeler.tree_ui.expand_to_node("Objects")
-        dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value=b"lkjkl", dtype=ua.ObjectIds.Float)
+        dia = NewUaVariableDialog(self.modeler, "Add Variable", self.modeler.get_current_server(), default_value="lkjkl", dtype=ua.ObjectIds.Float)
         with self.assertRaises(ValueError):
             args = dia.get_args()
             new_node = self.mgr.add_variable(*args)

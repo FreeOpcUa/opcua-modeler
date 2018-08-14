@@ -27,6 +27,7 @@ class _Struct(object):
         self.typename = typename
         self.fields = []
 
+
 class ModelManager(QObject):
     """
     Manage our model. loads xml, start and close, add nodes
@@ -147,7 +148,7 @@ class ModelManager(QObject):
                 # we only care about structs, ignoring enums
                 if isinstance(el, Struct):
                     try:
-                        struct_node = base_struct.get_child("0:" + el.name)
+                        struct_node = base_struct.get_child(f"{idx}:{el.name}")
                     except ua.UaError:
                         logger.warning("Could not find struct %s under %s", el.name, base_struct)
                         continue
@@ -160,7 +161,7 @@ class ModelManager(QObject):
                                 logger.warning("Could not find datatype of name %s %s", field.uatype, type(field.uatype))
                                 continue
                         vtype = data_type_to_variant_type(dtype)
-                        new = struct_node.add_variable(1, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
+                        new = struct_node.add_variable(idx, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
 
     def _get_datatype_from_string(self, idx, name):
         #FIXME: this is very heavy and missing recusion, what is the correct way to do that?
@@ -356,7 +357,7 @@ class ModelManager(QObject):
         for struct in structs:
             struct_el = Et.SubElement(root_el, 'opc:StructuredType', {'Name': struct.name, 'BaseType': 'ua' + struct.typename})
             for name, typename in struct.fields:
-                if typename in ua.ObjectIdNames:
+                if hasattr(ua.ObjectIds, typename):
                     prefix = "opc"
                 else:
                     prefix = "tns"
@@ -368,7 +369,7 @@ class ModelManager(QObject):
             dict_node = opc_binary.get_child(f'{idx}:{dict_name}')
             dict_node.set_value(val)
         except ua.UaError:
-            dict_node = opc_binary.add_variable(1, dict_name, val, ua.VariantType.ByteString)
+            dict_node = opc_binary.add_variable(idx, dict_name, val, ua.VariantType.ByteString)
             self._after_add(dict_node)
         #FIXME: add struct node under dict_node
         # for debug
