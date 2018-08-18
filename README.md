@@ -18,6 +18,17 @@ Current state and plans can be found here: https://github.com/FreeOpcUa/opcua-mo
 
 ![Screenshot](/screenshot.png?raw=true "Screenshot")
 
+# Creating custom structures
+
+The process of creatig custom structures is a bit different than in order modelers. Ideas and code to improve process is welcome
+
+1. Create a new namespace (Only ONE namespace is required, namespace one will be used) 
+2. create a new data type under DataType /  Structure
+3. populate data type with new variables using correct data type
+4. save
+
+The new nodes under your custom Structure will not be saved in model but a new node called TypeDictionnay will be created and its value describe the custom nodes (As specified in UA specification). When reopening your model, the design nodes will be recreated on the fly and you can add/modify your custom structure
+
 # How to Install  
 
 *Note: PyQT 5 is required.*
