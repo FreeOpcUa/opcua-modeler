@@ -295,7 +295,6 @@ class ModelManager(QObject):
     def add_property(self, *args):
         parent = self.modeler.tree_ui.get_current_node()
         logger.info("Creating property with args: %s", args)
-        self.settings.setValue("last_datatype", args[4])
         new_node = parent.add_property(*args)
         self._after_add(new_node)
         return new_node

@@ -321,17 +321,14 @@ class ModelManagerUI(QObject):
 
     @trycatchslot
     def add_variable(self):
-        dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Variable", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Variable", self._model_mgr.server_mgr, default_value=9.99)
         if ok:
             node = self._model_mgr.add_variable(*args)
-            self.settings.setValue("last_datatype", args[4])
             self._add_modelling_rule(node)
 
     @trycatchslot
     def add_property(self):
-        dtype = self.settings.value("last_datatype", None)
-        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Property", self._model_mgr.server_mgr, default_value=9.99, dtype=dtype)
+        args, ok = NewUaVariableDialog.getArgs(self.modeler, "Add Property", self._model_mgr.server_mgr, default_value=9.99)
         if ok:
             node = self._model_mgr.add_property(*args)
             self._add_modelling_rule(node)
