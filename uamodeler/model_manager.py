@@ -346,6 +346,8 @@ class ModelManager(QObject):
 
         for node in to_delete:
             node.delete()
+            if node in self.new_nodes:
+                self.new_nodes.remove(node)
 
     def _save_bsd(self, structs):
         logger.warning("Structs %s", structs)
