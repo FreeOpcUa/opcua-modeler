@@ -198,6 +198,11 @@ class ModelManager(QObject):
         dirname = os.path.dirname(path)
         xmlpath = os.path.join(dirname, mod_el.attrib['path'])
         self._open_xml(xmlpath)
+        if "current_node" in mod_el.attrib:
+            current_node_str = mod_el.attrib['current_node']
+            nodeid = ua.NodeId.from_string(current_node_str)
+            current_node = self.server_mgr.get_node(nodeid)
+            self.modeler.tree_ui.expand_to_node(current_node)
 
     def _get_path(self, path):
         if path is None:
@@ -228,6 +233,9 @@ class ModelManager(QObject):
         etree = Et.ElementTree(Et.Element('UAModel'))
         node_el = Et.SubElement(etree.getroot(), "Model")
         node_el.attrib["path"] = os.path.basename(path) + ".xml"
+        c_node = self.modeler.tree_ui.get_current_node()
+        if c_node:
+            node_el.attrib["current_node"] = c_node.nodeid.to_string()
         for refpath in self.modeler.nodesets_ui.nodesets:
             node_el = Et.SubElement(etree.getroot(), "Reference")
             node_el.attrib["path"] = refpath
