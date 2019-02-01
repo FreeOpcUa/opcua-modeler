@@ -50,11 +50,10 @@ class ModelManager(QObject):
 
     def delete_node(self, node):
         if node:
-            nodes = get_node_children(node)
-            for n in nodes:
-                n.delete(delete_references=True, recursive=True)
-                if n in self.new_nodes:
-                    self.new_nodes.remove(n)
+            deleted_nodes = node.delete(delete_references=True, recursive=True)
+            for dn in deleted_nodes:
+                if dn in self.new_nodes:
+                    self.new_nodes.remove(dn)
             self.modeler.tree_ui.remove_current_item()
 
     def paste_node(self, node):
