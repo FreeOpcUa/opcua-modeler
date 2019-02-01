@@ -10,9 +10,8 @@ from opcua import ua
 from opcua import copy_node
 from opcua import Node
 from opcua.common.instantiate import instantiate
-from opcua.common.ua_utils import get_node_children, data_type_to_variant_type
+from opcua.common.ua_utils import data_type_to_variant_type
 from opcua.common.structures import Struct, StructGenerator
-from opcua.common.xmlexporter import indent
 
 from uawidgets.utils import trycatchslot
 
@@ -21,7 +20,7 @@ from uamodeler.server_manager import ServerManager
 logger = logging.getLogger(__name__)
 
 
-class _Struct(object):
+class _Struct:
     def __init__(self, name, typename):
         self.name = name
         self.typename = typename
@@ -175,12 +174,14 @@ class ModelManager(QObject):
         return None
 
     def open(self, path):
+        print("OPEN", path)
         if path.endswith(".xml"):
             self.open_xml(path)
         else:
             self.open_ua_model(path)
 
     def open_ua_model(self, path):
+        print("OPEN UA", path)
         self.new_model()
         try:
             self._open_ua_model(path)
@@ -189,6 +190,7 @@ class ModelManager(QObject):
             raise
 
     def _open_ua_model(self, path):
+        print("OPEN UA", path)
         tree = Et.parse(path)
         root = tree.getroot()
         for ref_el in root.findall("Reference"):

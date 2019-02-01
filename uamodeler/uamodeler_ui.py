@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uamodeler/uamodeler_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -93,10 +93,12 @@ class Ui_UaModeler(object):
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         UaModeler.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(UaModeler)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 922, 26))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 922, 25))
         self.menuBar.setObjectName("menuBar")
         self.menuOPC_UA_Client = QtWidgets.QMenu(self.menuBar)
         self.menuOPC_UA_Client.setObjectName("menuOPC_UA_Client")
+        self.menuRecentFiles = QtWidgets.QMenu(self.menuBar)
+        self.menuRecentFiles.setObjectName("menuRecentFiles")
         UaModeler.setMenuBar(self.menuBar)
         self.statusBar = QtWidgets.QStatusBar(UaModeler)
         self.statusBar.setObjectName("statusBar")
@@ -158,6 +160,7 @@ class Ui_UaModeler(object):
         self.menuOPC_UA_Client.addAction(self.actionUseOpenUa)
         self.menuOPC_UA_Client.addAction(self.actionQuit)
         self.menuBar.addAction(self.menuOPC_UA_Client.menuAction())
+        self.menuBar.addAction(self.menuRecentFiles.menuAction())
         self.toolBar.addAction(self.actionNew)
         self.toolBar.addAction(self.actionOpen)
         self.toolBar.addAction(self.actionSave)
@@ -184,6 +187,7 @@ class Ui_UaModeler(object):
         self.label.setText(_translate("UaModeler", "Attributes Editor"))
         self.label_2.setText(_translate("UaModeler", "References Editor"))
         self.menuOPC_UA_Client.setTitle(_translate("UaModeler", "Act&ions"))
+        self.menuRecentFiles.setTitle(_translate("UaModeler", "Recent files"))
         self.toolBar.setWindowTitle(_translate("UaModeler", "toolBar"))
         self.actionAddObject.setText(_translate("UaModeler", "Add Object"))
         self.actionAddObject.setToolTip(_translate("UaModeler", "add child object to current node"))

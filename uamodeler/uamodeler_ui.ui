@@ -150,7 +150,7 @@
      <x>0</x>
      <y>0</y>
      <width>922</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOPC_UA_Client">
@@ -166,7 +166,13 @@
     <addaction name="actionUseOpenUa"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuRecentFiles">
+    <property name="title">
+     <string>Recent files</string>
+    </property>
+   </widget>
    <addaction name="menuOPC_UA_Client"/>
+   <addaction name="menuRecentFiles"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QToolBar" name="toolBar">

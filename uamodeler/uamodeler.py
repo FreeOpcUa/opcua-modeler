@@ -6,7 +6,8 @@ import logging
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QStyledItemDelegate, QMenu
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QStyledItemDelegate, QMenu, QAction
+
 
 from opcua import ua
 
@@ -42,7 +43,7 @@ class BoldDelegate(QStyledItemDelegate):
         QStyledItemDelegate.paint(self, painter, option, idx)
 
 
-class ActionsManager(object):
+class ActionsManager:
     """
     Manage actions of Modeler
     """
@@ -244,13 +245,17 @@ class ModelManagerUI(QObject):
             self._last_model_dir = os.path.dirname(path)
             self.settings.setValue("last_model_dir", self._last_model_dir)
         self._model_mgr.open(path)
+        self.modeler.update_recent_files(path)
+
+    def open_file(self, path):
+        self._model_mgr.open(path)
 
     @trycatchslot
     def import_xml(self):
         last_import_dir = self.settings.value("last_import_dir", ".")
         path, ok = QFileDialog.getOpenFileName(self.modeler, caption="Import reference OPC UA XML", filter="XML Files (*.xml *.XML)", directory=last_import_dir)
         if not ok:
-            return None
+            return
         self.settings.setValue("last_import_dir", last_import_dir)
         self._model_mgr.import_xml(path)
 
@@ -392,6 +397,37 @@ class UaModeler(QMainWindow):
         self.ui.treeView.setItemDelegate(delegate)
         self.ui.treeView.selectionModel().currentChanged.connect(self._update_actions_state)
 
+        self._recent_files = self.settings.value("recent_files", [])
+        self._recent_files_max_count = int(self.settings.value("recent_files_max_count", 10))
+        self._recent_files_acts = [QAction(self, visible=False, triggered=self.open_recent_files) for _ in range(self._recent_files_max_count)]
+        for act in self._recent_files_acts:
+            self.ui.menuRecentFiles.addAction(act)
+        self._update_recent_files_ui()
+
+    def open_recent_files(self):
+        if not self.model_mgr.try_close_model():
+            return
+        action = self.sender()
+        if action:
+            path = action.data()
+            self.model_mgr.open_file(path)
+            self.update_recent_files(path)
+
+    def update_recent_files(self, path):
+        if self._recent_files and path == self._recent_files[0]:
+            return
+        if path in self._recent_files:
+            self._recent_files.remove(path)
+        self._recent_files.insert(0, path)
+        self._recent_files = self._recent_files[:self._recent_files_max_count]
+        self._update_recent_files_ui()
+
+    def _update_recent_files_ui(self):
+        for idx, path in enumerate(self._recent_files):
+            self._recent_files_acts[idx].setText(path)
+            self._recent_files_acts[idx].setData(path)
+            self._recent_files_acts[idx].setVisible(True)
+
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
 
@@ -497,6 +533,7 @@ class UaModeler(QMainWindow):
         self.settings.setValue("splitter_left", self.ui.splitterLeft.saveState())
         self.settings.setValue("splitter_right", self.ui.splitterRight.saveState())
         self.settings.setValue("splitter_center", self.ui.splitterCenter.saveState())
+        self.settings.setValue("recent_files", self._recent_files)
         event.accept()
 
 
