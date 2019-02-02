@@ -266,11 +266,13 @@ class ModelManagerUI(QObject):
     def _save_as(self):
         path, ok = QFileDialog.getSaveFileName(self.modeler, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
+            print("PATH", path)
             if self._last_model_dir != os.path.dirname(path):
                 self._last_model_dir = os.path.dirname(path)
                 self.settings.setValue("last_model_dir", self._last_model_dir)
             self._model_mgr.save_xml(path)
-            self._model_mgr.save_ua_model(path)
+            path = self._model_mgr.save_ua_model(path)
+            self.modeler.update_recent_files(path)
 
     @trycatchslot
     def save(self):

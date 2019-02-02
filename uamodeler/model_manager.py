@@ -242,6 +242,7 @@ class ModelManager(QObject):
             node_el = Et.SubElement(etree.getroot(), "Reference")
             node_el.attrib["path"] = refpath
         etree.write(model_path, encoding='utf-8', xml_declaration=True)
+        return model_path
 
     def _after_add(self, new_nodes):
         if isinstance(new_nodes, (list, tuple)):
