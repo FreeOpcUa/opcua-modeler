@@ -8,10 +8,11 @@ before_install:
 install:
   - pip install python-dateutil
   - pip install cryptography
+  - pip install pytest
   - pip install pyqt5
   - pip install pytz
   - pip install lxml
   - git clone https://github.com/FreeOpcUa/python-opcua.git 
   - git clone https://github.com/FreeOpcUa/opcua-widgets.git 
 # command to run tests
-script: python tests.py
+script: pytest -v
