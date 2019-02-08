@@ -174,14 +174,12 @@ class ModelManager(QObject):
         return None
 
     def open(self, path):
-        print("OPEN", path)
         if path.endswith(".xml"):
             self.open_xml(path)
         else:
             self.open_ua_model(path)
 
     def open_ua_model(self, path):
-        print("OPEN UA", path)
         self.new_model()
         try:
             self._open_ua_model(path)
@@ -190,7 +188,6 @@ class ModelManager(QObject):
             raise
 
     def _open_ua_model(self, path):
-        print("OPEN UA", path)
         tree = Et.parse(path)
         root = tree.getroot()
         for ref_el in root.findall("Reference"):

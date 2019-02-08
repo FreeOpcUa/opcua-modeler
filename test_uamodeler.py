@@ -12,8 +12,14 @@ from uamodeler.uamodeler import UaModeler
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
 
 
+# README: QApplication.exec() is never called so if you call somehting dependingon some earlier events, 
+# call app.processEvents() jsut before
+global app
+
+
 @pytest.fixture(scope="module")
 def modeler():
+    global app
     app = QApplication(sys.argv)
     modeler = UaModeler()
     yield modeler
@@ -80,31 +86,26 @@ def test_save_open_ua_model(modeler, mgr):
     mgr.close_model()
 
 
-@pytest.mark.skip("Something wrong with expand_to_node")
-def test_delete_save(modeler, mgr):
+#@pytest.mark.skip("Something wrong with expand_to_node")
+def test_delete_save(modeler, mgr, model):
     path = "test_delete_save.uamodel"
     val = 0.99
-    mgr.new_model()
     modeler.tree_ui.expand_to_node("Objects")
     obj_node = mgr.add_folder(1, "myobj")
-    modeler.tree_ui.expand_to_node("Objects")
-    modeler.tree_ui.expand_to_node("myobj")
     obj2_node = mgr.add_folder(1, "myobj2")
-    modeler.tree_ui.reload_current()
-
+    app.processEvents()
     modeler.tree_ui.expand_to_node("myobj2")
-    #var_node = mgr.add_variable(1, "myvar", val)
+    var_node = mgr.add_variable(1, "myvar", val)
     mgr.save_ua_model(path)
     mgr.save_xml(path)
 
-    modeler.tree_ui.expand_to_node("myobj2")
+    app.processEvents()
+    modeler.tree_ui.expand_to_node(obj2_node)
     mgr.delete_node(obj2_node)
     mgr.save_ua_model(path)
     mgr.save_xml(path)
     assert obj2_node not in mgr.new_nodes
     assert var_node not in mgr.new_nodes
-
-    mgr.close_model(force=True)
 
 
 def test_structs(modeler, mgr):
