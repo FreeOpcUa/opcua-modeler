@@ -6,20 +6,14 @@ from opcua import ua
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QAbstractItemDelegate
-from PyQt5.QtTest import QTest
 
 from uamodeler.uamodeler import UaModeler
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
 
 
-# README: QApplication.exec() is never called so if you call somehting dependingon some earlier events, 
-# call app.processEvents() jsut before
-global app
 
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def modeler():
-    global app
     app = QApplication(sys.argv)
     modeler = UaModeler()
     yield modeler
@@ -29,6 +23,7 @@ def modeler():
 @pytest.fixture
 def mgr(modeler):
     mgr = modeler.model_mgr._model_mgr
+    mgr.close_model(force=True)  # make sure we close model
     yield mgr
     mgr.close_model(force=True)  # make sure we close model
 
@@ -93,13 +88,13 @@ def test_delete_save(modeler, mgr, model):
     modeler.tree_ui.expand_to_node("Objects")
     obj_node = mgr.add_folder(1, "myobj")
     obj2_node = mgr.add_folder(1, "myobj2")
-    app.processEvents()
+    QApplication.processEvents()
     modeler.tree_ui.expand_to_node("myobj2")
     var_node = mgr.add_variable(1, "myvar", val)
     mgr.save_ua_model(path)
     mgr.save_xml(path)
 
-    app.processEvents()
+    QApplication.processEvents()
     modeler.tree_ui.expand_to_node(obj2_node)
     mgr.delete_node(obj2_node)
     mgr.save_ua_model(path)
@@ -155,23 +150,51 @@ def test_structs(modeler, mgr):
     st.MyBytes = b"klk"
 
 
-"""
+def test_structs_2(modeler, mgr):
+    mgr.new_model()
 
-class TestModeler(unittest.TestCase):
+    urns = modeler.get_current_server().get_namespace_array()
+    ns_node = mgr.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray)
+    urns = ns_node.get_value()
+    urns.append("urn://modeller/testing")
+    ns_node.set_value(urns)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.modeler = UaModeler()
-        cls.modeler.ui.actionNew.activate(0)
-        cls.mgr = cls.modeler.model_mgr._model_mgr
-        #modeler.show()
-        #sys.exit(app.exec_())
+    path = "test_save_structs_2.xml"
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.modeler.get_current_server().stop_server()
+    struct_node = mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+    modeler.tree_ui.expand_to_node(struct_node)
+    mystruct = mgr.add_data_type(1, "MyStruct")
+    QApplication.processEvents()
+    modeler.tree_ui.expand_to_node("MyStruct")
+    var_node = mgr.add_variable(1, "myvar", 0.1)
 
-"""
+    mgr.save_xml(path)
+    mgr.close_model()
+    mgr.open_xml(path)
+
+    struct_node = mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+    mystruct_node = struct_node.get_child("1:MyStruct")
+    var2_node = mystruct_node.add_variable(1, "myvar2", 0.2)
+    # following code break...why??!?!??!
+    #QApplication.processEvents()
+    #modeler.tree_ui.expand_to_node("MyStruct")
+    #var2_node = mgr.add_variable(1, "myvar2", 0.2)
+
+    mgr.save_xml(path)
+    mgr.close_model()
+    mgr.open_xml(path)
+
+    struct_node = mgr.server_mgr.get_node(ua.ObjectIds.Structure)
+    mystruct = struct_node.get_child("1:MyStruct")
+    assert len(mystruct.get_children()) == 2
+
+    mgr.server_mgr.load_type_definitions()
+
+    st = ua.MyStruct()
+    assert hasattr(st, "myvar")
+    assert hasattr(st, "myvar2")
+    mgr.close_model()
+
 
 def test_set_current_node(modeler, mgr, model):
     objects = modeler.get_current_server().nodes.objects
