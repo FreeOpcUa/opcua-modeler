@@ -12,6 +12,7 @@ from opcua import Node
 from opcua.common.instantiate import instantiate
 from opcua.common.ua_utils import data_type_to_variant_type
 from opcua.common.structures import Struct, StructGenerator
+from opcua.common.type_dictionary_buider import DataTypeDictionaryBuilder, get_ua_class
 
 from uawidgets.utils import trycatchslot
 
@@ -47,13 +48,15 @@ class ModelManager(QObject):
         self.modified = False
         self.modeler.attrs_ui.attr_written.connect(self._attr_written)
 
-    def delete_node(self, node):
+    def delete_node(self, node, interactive=True):
+        logger.warning("Deleting: %s", node)
         if node:
             deleted_nodes = node.delete(delete_references=True, recursive=True)
             for dn in deleted_nodes:
-                if dn in self.new_nodes:
-                    self.new_nodes.remove(dn)
-            self.modeler.tree_ui.remove_current_item()
+                # make sure we remove ALL instances of node
+                self.new_nodes[:] = (node for node in self.new_nodes if node != dn)
+            if interactive:
+                self.modeler.tree_ui.remove_current_item()
 
     def paste_node(self, node):
         parent = self.modeler.get_current_node()
@@ -220,6 +223,7 @@ class ModelManager(QObject):
         logger.info("Exporting  %s nodes: %s", len(self.new_nodes), self.new_nodes)
         logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
         uris = self.server_mgr.get_namespace_array()[1:]
+        self.new_nodes = list(OrderedDict.fromkeys(self.new_nodes))  # remove any potential duplicate
         self.server_mgr.export_xml(self.new_nodes, uris, path)
         self.modified = False
         logger.info("%s saved", path)
@@ -322,19 +326,47 @@ class ModelManager(QObject):
         elif attr == ua.AttributeIds.DisplayName:
             self.modeler.tree_ui.update_display_name_current_item(dv.Value.Value)
 
+    def _create_type_dict_node(self, idx, urn, name):
+        node_id = None
+        # first delete current dict node and its children
+        try:
+            opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
+            dnode = opc_binary.get_child(f"{idx}:{name}")
+            node_id = dnode.nodeid
+        except ua.UaError:
+            logger.warning("Dictionary node does not exist, creating it: %s", name)
+        builder = DataTypeDictionaryBuilder(self.server_mgr, idx, urn, name, dict_node_id=node_id)
+        if builder.dict_id not in self.new_nodes:
+            self.new_nodes.append(self.server_mgr.get_node(builder.dict_id))
+        return builder
+
     def _save_structs(self):
         """
         Save struct and delete our design nodes. They will need to be recreated
         """
         struct_node = self.server_mgr.get_node(ua.ObjectIds.Structure)
-        structs = []
+        dict_name = "TypeDictionary"
+        idx = 1
+        urn = self.server_mgr.get_namespace_array()[1]
         to_delete = []
+        have_structs = False
+        to_add = []
         for node in self.new_nodes:
             # FIXME: we do not support inheritance
             parent = node.get_parent()
             if parent == struct_node:
+                if not have_structs:
+                    dict_builder = self._create_type_dict_node(idx, urn, dict_name)
+                    dict_node = self.server_mgr.get_node(dict_builder.dict_id)
+                have_structs = True
                 bname = node.get_browse_name()
-                st = _Struct(bname.Name, "ExtensionObject")
+                try:
+                    dict_node.get_child(f"{idx}:{bname.Name}")
+                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, False)
+                except ua.UaError:
+                    logger.warning("DataType %s has not been initialized, doing it", bname)
+                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, True)
+
                 childs = node.get_children()
                 for child in childs:
                     bname = child.get_browse_name()
@@ -343,73 +375,17 @@ class ModelManager(QObject):
                     except ua.UaError:
                         logger.warning("could not get data type for node %s, %s, skipping", child, child.get_browse_name())
                         continue
-                    dtype_name = Node(node.server, dtype).get_browse_name()
-                    st.fields.append([bname.Name, dtype_name.Name])
-                    to_delete.append(child)
-                structs.append(st)
 
-        if structs:
-            self._save_bsd(structs)
+                    dtype_name = Node(node.server, dtype).get_browse_name()
+                    struct.add_field(bname.Name, dtype_name.Name)
+                    to_delete.append(child)
+
+                to_add.extend([self.server_mgr.get_node(nodeid) for nodeid in struct.node_ids])
+
+        if have_structs:
+            dict_builder.set_dict_byte_string()
+            self.new_nodes.extend(to_add)
 
         for node in to_delete:
-            node.delete()
-            if node in self.new_nodes:
-                self.new_nodes.remove(node)
-
-    def _save_bsd(self, structs):
-        logger.warning("Structs %s", structs)
-        idx = 1 
-        urn = self.server_mgr.get_namespace_array()[1]
-        dict_name = "TypeDictionary"
-
-        node_set_attributes = OrderedDict()
-        node_set_attributes['xmlns:opc'] = "http://opcfoundation.org/BinarySchema/"
-        node_set_attributes['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance'
-        node_set_attributes['xmlns:ua'] = "http://opcfoundation.org/UA/"
-        node_set_attributes['xmlns:tns'] = urn
-        node_set_attributes['DefaultByteOrder'] = 'LittleIndian'
-        node_set_attributes['TargetNamespace'] = urn
-
-        etree = Et.ElementTree(Et.Element('opc:TypeDictionnary', node_set_attributes))
-        root_el = etree.getroot()
-
-        Et.SubElement(root_el, 'opc:Import', {'Namespace': "http://opcfoundation.org/UA/", 'Location': 'Opc.Ua.BinarySchema.bsd'})
-        for struct in structs:
-            struct_el = Et.SubElement(root_el, 'opc:StructuredType', {'Name': struct.name, 'BaseType': 'ua' + struct.typename})
-            for name, typename in struct.fields:
-                if hasattr(ua.ObjectIds, typename):
-                    prefix = "opc"
-                else:
-                    prefix = "tns"
-                Et.SubElement(struct_el, 'opc:Field', {'Name': name, 'TypeName': prefix + ":" + typename})
-
-        val = Et.tostring(root_el, encoding='utf-8')
-        opc_binary = self.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
-        dict_node = self._set_or_add_variable(opc_binary, idx, dict_name, val, ua.VariantType.ByteString)
-
-        # add struct and namespace nodes under dict_node
-        self._create_typedictonary_children(dict_node, idx, urn, [struct.name for struct in structs])
-
-    def _create_typedictonary_children(self, typenode, idx, urn, structs):
-        self._set_or_add_variable(typenode, idx, "NamespaceUri", urn, varianttype=ua.VariantType.String, isproperty=True)
-        for name in structs:
-            node = self._set_or_add_variable(typenode, idx, name, name, varianttype=ua.VariantType.String, isproperty=True)
-            ref_desc_list = node.get_references(refs=ua.ObjectIds.HasDescription, direction=ua.BrowseDirection.Inverse)
-            if not ref_desc_list:
-                # we need to add description
-                node.add_reference(ua.ObjectIds.DataTypeEncodingType, ua.ObjectIds.HasDescription, forward=False, bidirectional=True)
-                #FIXME: link is bidirectional... this is not going to be saved or??
-
-    def _set_or_add_variable(self, parent, idx, name, val, varianttype, isproperty=False, save=True):
-        try:
-            node = parent.get_child(f'{idx}:{name}')
-            node.set_value(val, varianttype=varianttype)
-        except ua.UaError:
-            if isproperty:
-                node = parent.add_property(idx, name, val, varianttype=varianttype)
-            else:
-                node = parent.add_variable(idx, name, val, varianttype=varianttype)
-        if save:
-            self._after_add(node)
-        return node
+            self.delete_node(node, False)
 
