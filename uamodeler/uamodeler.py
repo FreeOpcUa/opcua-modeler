@@ -425,6 +425,8 @@ class UaModeler(QMainWindow):
         self._update_recent_files_ui()
 
     def _update_recent_files_ui(self):
+        if not self._recent_files:
+            return
         for idx, path in enumerate(self._recent_files):
             self._recent_files_acts[idx].setText(path)
             self._recent_files_acts[idx].setData(path)
