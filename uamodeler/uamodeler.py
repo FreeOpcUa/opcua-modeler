@@ -416,7 +416,7 @@ class UaModeler(QMainWindow):
             self.update_recent_files(path)
 
     def update_recent_files(self, path):
-        if self._recent_files and path == self._recent_files[0]:
+        if not self._recent_files or path == self._recent_files[0]:
             return
         if path in self._recent_files:
             self._recent_files.remove(path)
