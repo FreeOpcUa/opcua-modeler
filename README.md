@@ -32,10 +32,11 @@ The new nodes under your custom Structure will not be saved in model but a new n
 # How to Install  
 
 *Note: PyQT 5 is required.*
+*Note: Python 3.6+ is required.*
 
 ### Linux:
 
-1. Make sure python and python-pip is installed  
+1. Make sure python 3.6+ and python-pip is installed  
 2. `pip3 install opcua-modeler`  
 4. Run with: `opcua-modeler`  
   
