@@ -31,7 +31,7 @@ The new nodes under your custom Structure will not be saved in model but a new n
 
 # How to Install  
 
-*Note: PyQT 5 is required.*
+*Note: PyQT 5 is required.*  
 *Note: Python 3.6+ is required.*
 
 ### Linux:
