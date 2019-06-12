@@ -211,7 +211,7 @@ class ModelManager(QObject):
             path = self.current_path
         if path is None:
             raise ValueError("No path is defined")
-        self.current_path = os.path.splitext(path)[0] 
+        self.current_path = os.path.splitext(path)[0]
         self.titleChanged.emit(self.current_path)
         return self.current_path
 
@@ -347,7 +347,11 @@ class ModelManager(QObject):
         struct_node = self.server_mgr.get_node(ua.ObjectIds.Structure)
         dict_name = "TypeDictionary"
         idx = 1
-        urn = self.server_mgr.get_namespace_array()[1]
+        ar = self.server_mgr.get_namespace_array()
+        if len(ar) == 1:
+            #no custom namepsace defined, there should not be any structures
+            return
+        urn = self.server_mgr.get_namespace_array()[idx]
         to_delete = []
         have_structs = False
         to_add = []
