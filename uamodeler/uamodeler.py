@@ -416,21 +416,21 @@ class UaModeler(QMainWindow):
             self.update_recent_files(path)
 
     def update_recent_files(self, path):
-        if not self._recent_files or path == self._recent_files[0]:
+        if self._recent_files and path == self._recent_files[0]:
             return
-        if path in self._recent_files:
-            self._recent_files.remove(path)
-        self._recent_files.insert(0, path)
-        self._recent_files = self._recent_files[:self._recent_files_max_count]
-        self._update_recent_files_ui()
+        if self._recent_files is not None:
+            if path in self._recent_files:
+                self._recent_files.remove(path)
+            self._recent_files.insert(0, path)
+            self._recent_files = self._recent_files[:self._recent_files_max_count]
+            self._update_recent_files_ui()
 
     def _update_recent_files_ui(self):
-        if not self._recent_files:
-            return
-        for idx, path in enumerate(self._recent_files):
-            self._recent_files_acts[idx].setText(path)
-            self._recent_files_acts[idx].setData(path)
-            self._recent_files_acts[idx].setVisible(True)
+        if self._recent_files is not None:
+            for idx, path in enumerate(self._recent_files):
+                self._recent_files_acts[idx].setText(path)
+                self._recent_files_acts[idx].setData(path)
+                self._recent_files_acts[idx].setVisible(True)
 
     def get_current_node(self, idx=None):
         return self.tree_ui.get_current_node(idx)
