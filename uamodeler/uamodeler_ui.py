@@ -215,6 +215,6 @@ class Ui_UaModeler(object):
         self.actionAddMethod.setText(_translate("UaModeler", "Add Method"))
         self.actionAddEnum.setText(_translate("UaModeler", "Add Enum Type"))
         self.actionAddEnum.setToolTip(_translate("UaModeler", "Add Enum Type"))
-        self.actionUseOpenUa.setText(_translate("UaModeler", "Use Open6541 Server"))
-        self.actionUseOpenUa.setToolTip(_translate("UaModeler", "User Open6541 Server"))
+        self.actionUseOpenUa.setText(_translate("UaModeler", "Use Open62541 Server"))
+        self.actionUseOpenUa.setToolTip(_translate("UaModeler", "User Open62541 Server"))
 

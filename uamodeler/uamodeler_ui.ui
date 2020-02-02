@@ -327,10 +327,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Use Open6541 Server</string>
+    <string>Use Open62541 Server</string>
    </property>
    <property name="toolTip">
-    <string>User Open6541 Server</string>
+    <string>User Open62541 Server</string>
    </property>
   </action>
  </widget>
