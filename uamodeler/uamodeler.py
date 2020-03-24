@@ -48,7 +48,8 @@ class ActionsManager:
     Manage actions of Modeler
     """
 
-    def __init__(self, ui, model_mgr):
+    def __init__(self, window, ui, model_mgr):
+        self.window = window
         self.ui = ui
         self.model_mgr = model_mgr
 
@@ -57,6 +58,7 @@ class ActionsManager:
         self.ui.actionNew.triggered.connect(self.model_mgr.new)
         self.ui.actionOpen.triggered.connect(self.model_mgr.open)
         self.ui.actionCopy.triggered.connect(self.model_mgr.copy)
+        self.ui.actionQuit.triggered.connect(self.window.close)
         self.ui.actionPaste.triggered.connect(self.model_mgr.paste)
         self.ui.actionDelete.triggered.connect(self.model_mgr.delete)
         self.ui.actionImport.triggered.connect(self.model_mgr.import_xml)
@@ -94,12 +96,12 @@ class ActionsManager:
 
     def update_actions_states(self, node):
         self.disable_add_actions()
-        if not node or node in (self.model_mgr.get_current_server().nodes.root, 
-                                self.model_mgr.get_current_server().nodes.types, 
-                                self.model_mgr.get_current_server().nodes.event_types, 
-                                self.model_mgr.get_current_server().nodes.object_types, 
-                                self.model_mgr.get_current_server().nodes.reference_types, 
-                                self.model_mgr.get_current_server().nodes.variable_types, 
+        if not node or node in (self.model_mgr.get_current_server().nodes.root,
+                                self.model_mgr.get_current_server().nodes.types,
+                                self.model_mgr.get_current_server().nodes.event_types,
+                                self.model_mgr.get_current_server().nodes.object_types,
+                                self.model_mgr.get_current_server().nodes.reference_types,
+                                self.model_mgr.get_current_server().nodes.variable_types,
                                 self.model_mgr.get_current_server().nodes.data_types):
             return
         path = node.get_path()
@@ -391,7 +393,7 @@ class UaModeler(QMainWindow):
         self.model_mgr = ModelManagerUI(self)
         self.model_mgr.error.connect(self.show_error)
         self.model_mgr.titleChanged.connect(self.update_title)
-        self.actions = ActionsManager(self.ui, self.model_mgr)
+        self.actions = ActionsManager(self, self.ui, self.model_mgr)
 
         self.setup_context_menu_tree()
 
