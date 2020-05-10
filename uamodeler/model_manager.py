@@ -211,7 +211,7 @@ class ModelManager(QObject):
             path = self.current_path
         if path is None:
             raise ValueError("No path is defined")
-        self.current_path = os.path.splitext(path)[0] 
+        self.current_path = os.path.splitext(path)[0]
         self.titleChanged.emit(self.current_path)
         return self.current_path
 
@@ -362,10 +362,10 @@ class ModelManager(QObject):
                 bname = node.get_browse_name()
                 try:
                     dict_node.get_child(f"{idx}:{bname.Name}")
-                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, False)
+                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, init=False)
                 except ua.UaError:
                     logger.warning("DataType %s has not been initialized, doing it", bname)
-                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, True)
+                    struct = dict_builder.create_data_type(bname.Name, node.nodeid, init=True)
 
                 childs = node.get_children()
                 for child in childs:
@@ -375,9 +375,12 @@ class ModelManager(QObject):
                     except ua.UaError:
                         logger.warning("could not get data type for node %s, %s, skipping", child, child.get_browse_name())
                         continue
+                    array = False
+                    if isinstance(child.get_value(), list) or child.get_array_dimensions():
+                        array = True
 
                     dtype_name = Node(node.server, dtype).get_browse_name()
-                    struct.add_field(bname.Name, dtype_name.Name)
+                    struct.add_field(bname.Name, dtype_name.Name, is_array=array)
                     to_delete.append(child)
 
                 to_add.extend([self.server_mgr.get_node(nodeid) for nodeid in struct.node_ids])
