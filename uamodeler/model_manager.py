@@ -164,7 +164,12 @@ class ModelManager(QObject):
                     logger.warning("Could not find datatype of name %s %s", field.uatype, type(field.uatype))
                     return
             vtype = data_type_to_variant_type(dtype)
-            struct_node.add_variable(idx, field.name, field.value, varianttype=vtype, datatype=dtype.nodeid)
+            val = ua.get_default_value(vtype)
+            node = struct_node.add_variable(idx, field.name, val, varianttype=vtype, datatype=dtype.nodeid)
+            if field.array:
+                node.set_value_rank(ua.ValueRank.OneDimension)
+                node.set_array_dimensions([1])
+
 
     def _get_datatype_from_string(self, idx, name):
         #FIXME: this is very heavy and missing recusion, what is the correct way to do that?
@@ -376,7 +381,7 @@ class ModelManager(QObject):
                         logger.warning("could not get data type for node %s, %s, skipping", child, child.get_browse_name())
                         continue
                     array = False
-                    if isinstance(child.get_value(), list) or child.get_array_dimensions():
+                    if isinstance(child.get_value(), list) or child.get_array_dimensions() or child.get_value_rank() != ua.ValueRank.Scalar:
                         array = True
 
                     dtype_name = Node(node.server, dtype).get_browse_name()
