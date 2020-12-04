@@ -2,17 +2,11 @@ language: python
 python:
   - "3.6"
 env:
-  - DISPLAY=:99.0
-before_install:
-  - sh -e /etc/init.d/xvfb start
+  - QT_QPA_PLATFORM=minimal
 install:
-  - pip install python-dateutil
-  - pip install cryptography
   - pip install pytest
   - pip install pyqt5
-  - pip install pytz
-  - pip install lxml
-  - git clone https://github.com/FreeOpcUa/python-opcua.git 
-  - git clone https://github.com/FreeOpcUa/opcua-widgets.git 
+  - pip install opcua
+  - pip install opcua-widgets
 # command to run tests
-script: pytest -v
+script: env; pytest -v -s

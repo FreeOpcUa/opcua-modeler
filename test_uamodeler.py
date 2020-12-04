@@ -1,10 +1,11 @@
 
 import sys
 import pytest
+import time
 
 from opcua import ua
 
-from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
+from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication, QEventLoop
 from PyQt5.QtWidgets import QApplication, QAbstractItemDelegate
 
 from uamodeler.uamodeler import UaModeler
@@ -51,7 +52,7 @@ def test_save_open_xml(modeler, mgr):
     val = 0.99
     mgr.new_model()
     modeler.tree_ui.expand_to_node("Objects")
-    node = mgr.add_variable(1, "myvar", val)
+    node = mgr.add_variable(0, "myvar", val)
     mgr.save_xml(path)
     mgr.close_model()
     with pytest.raises(Exception):
@@ -88,13 +89,12 @@ def test_delete_save(modeler, mgr, model):
     modeler.tree_ui.expand_to_node("Objects")
     obj_node = mgr.add_folder(1, "myobj")
     obj2_node = mgr.add_folder(1, "myobj2")
-    QApplication.processEvents()
+    QApplication.processEvents(QEventLoop.WaitForMoreEvents|QEventLoop.AllEvents)
     modeler.tree_ui.expand_to_node("myobj2")
     var_node = mgr.add_variable(1, "myvar", val)
     mgr.save_ua_model(path)
     mgr.save_xml(path)
-
-    QApplication.processEvents()
+    QApplication.processEvents(QEventLoop.WaitForMoreEvents|QEventLoop.AllEvents)
     modeler.tree_ui.expand_to_node(obj2_node)
     mgr.delete_node(obj2_node)
     mgr.save_ua_model(path)
@@ -164,7 +164,7 @@ def test_structs_2(modeler, mgr):
     struct_node = mgr.server_mgr.get_node(ua.ObjectIds.Structure)
     modeler.tree_ui.expand_to_node(struct_node)
     mystruct = mgr.add_data_type(1, "MyStruct")
-    QApplication.processEvents()
+    QApplication.processEvents(QEventLoop.WaitForMoreEvents|QEventLoop.AllEvents)
     modeler.tree_ui.expand_to_node("MyStruct")
     var_node = mgr.add_variable(1, "myvar", 0.1)
 
