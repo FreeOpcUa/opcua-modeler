@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSignal, Qt, QObject
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QMenu, QAction, QStyledItemDelegate
 
-from opcua import ua
+from asyncua import ua
 
 from uawidgets.utils import trycatchslot
 
@@ -26,7 +26,7 @@ class NamespaceWidget(QObject):
         self.view.setItemDelegate(delegate)
         self.node = None
         self.view.header().setSectionResizeMode(1)
-        
+
         self.addNamespaceAction = QAction("Add Namespace", self.model)
         self.addNamespaceAction.triggered.connect(self.add_namespace)
         self.removeNamespaceAction = QAction("Remove Namespace", self.model)
@@ -40,7 +40,7 @@ class NamespaceWidget(QObject):
 
     @trycatchslot
     def add_namespace(self):
-        uries = self.node.get_value()
+        uries = self.node.read_value()
         newidx = len(uries)
         it = self.model.item(0, 0)
         uri_it = QStandardItem("")
@@ -56,10 +56,10 @@ class NamespaceWidget(QObject):
         idx = idx.sibling(idx.row(), 2)
         item = self.model.itemFromIndex(idx)
         uri = item.text()
-        uries = self.node.get_value()
+        uries = self.node.read_value()
         uries.remove(uri)
         logger.info("Writting namespace array: %s", uries)
-        self.node.set_value(uries)
+        self.node.write_value(uries)
         self.reload()
 
     def set_node(self, node):
@@ -73,10 +73,10 @@ class NamespaceWidget(QObject):
     def show_array(self):
         self.model.setHorizontalHeaderLabels(['Browse Name', 'Index', 'Value'])
 
-        name_item = QStandardItem(self.node.get_browse_name().Name)
+        name_item = QStandardItem(self.node.read_browse_name().Name)
         self.model.appendRow([name_item, QStandardItem(""), QStandardItem()])
         it = self.model.item(0, 0)
-        val = self.node.get_value()
+        val = self.node.read_value()
         for idx, url in enumerate(val):
             it.appendRow([QStandardItem(), QStandardItem(str(idx)), QStandardItem(url)])
         self.view.expandAll()
@@ -130,6 +130,6 @@ class MyDelegate(QStyledItemDelegate):
                 break
             uries.append(child.text())
         logger.info("Writting namespace array: %s", uries)
-        self.widget.node.set_value(uries)
+        self.widget.node.write_value(uries)
 
 

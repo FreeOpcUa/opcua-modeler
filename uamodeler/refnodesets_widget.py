@@ -1,12 +1,12 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt, QObject, QModelIndex
+from PyQt5.QtCore import pyqtSignal, Qt, QObject
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QMenu, QAction, QInputDialog, QFileDialog
+from PyQt5.QtWidgets import QMenu, QAction, QFileDialog
 
-from opcua import ua
 
 from uawidgets.utils import trycatchslot
+
 
 class RefNodeSetsWidget(QObject):
 
@@ -22,7 +22,7 @@ class RefNodeSetsWidget(QObject):
         self.nodesets = []
         self.server_mgr = None
         self.view.header().setSectionResizeMode(1)
-        
+
         addNodeSetAction = QAction("Add Reference Node Set", self.model)
         addNodeSetAction.triggered.connect(self.add_nodeset)
         self.removeNodeSetAction = QAction("Remove Reference Node Set", self.model)

@@ -4,10 +4,8 @@ from threading import Thread
 
 from PyQt5.QtCore import QSettings
 
-from opcua import ua
-from opcua import Server
-from opcua import Client
-from opcua.common.xmlexporter import XmlExporter
+from asyncua import ua
+from asyncua.sync import Server, Client, XmlExporter
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +95,8 @@ class ServerPython(object):
         # now remove freeopcua namespace, not necessary when modeling and
         # ensures correct idx for exported nodesets
         ns_node = self._server.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
-        nss = ns_node.get_value()
-        ns_node.set_value(nss[:1])
+        nss = ns_node.read_value()
+        ns_node.write_value(nss[:1])
         self._server.start()
 
     def stop_server(self):
@@ -158,8 +156,8 @@ class ServerC(object):
         # now remove freeopcua namespace, not necessary when modeling and
         # ensures correct idx for exported nodesets
         ns_node = self._client.get_node(ua.NodeId(ua.ObjectIds.Server_NamespaceArray))
-        nss = ns_node.get_value()
-        #ns_node.set_value(nss[1:])
+        nss = ns_node.read_value()
+        #ns_node.read_value(nss[1:])
 
     def stop_server(self):
         if self._server is not None:

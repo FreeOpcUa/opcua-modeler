@@ -2,10 +2,9 @@
 import sys
 import pytest
 
-from opcua import ua
+from asyncua import ua
 
 from PyQt5.QtCore import QTimer, QSettings, QModelIndex, Qt, QCoreApplication
-from PyQt5.QtWidgets import QApplication, QAbstractItemDelegate
 
 from uamodeler.uamodeler import UaModeler
 from uawidgets.new_node_dialogs import NewNodeBaseDialog, NewUaObjectDialog, NewUaVariableDialog, NewUaMethodDialog
@@ -56,10 +55,10 @@ def test_save_open_xml(modeler, mgr):
     mgr.close_model()
     with pytest.raises(Exception):
         node = mgr.server_mgr.get_node(node.nodeid)
-        node.get_value()
+        node.read_value()
     mgr.open(path)
     node = mgr.server_mgr.get_node(node.nodeid)
-    assert node.get_value() == val
+    assert node.read_value() == val
     mgr.close_model(True)
 
 
@@ -74,10 +73,10 @@ def test_save_open_ua_model(modeler, mgr):
     mgr.close_model()
     with pytest.raises(Exception):
         node = mgr.server_mgr.get_node(node.nodeid)
-        node.get_value()
+        node.read_value()
     mgr.open(path)
     node = mgr.server_mgr.get_node(node.nodeid)
-    node.get_value() == val
+    node.read_value() == val
     mgr.close_model()
 
 
@@ -108,9 +107,9 @@ def test_structs(modeler, mgr):
 
     urns = modeler.get_current_server().get_namespace_array()
     ns_node = mgr.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray)
-    urns = ns_node.get_value()
+    urns = ns_node.read_value()
     urns.append("urn://modeller/testing")
-    ns_node.set_value(urns)
+    ns_node.write_value(urns)
 
     path = "test_save_structs.xml"
 
@@ -125,7 +124,7 @@ def test_structs(modeler, mgr):
     # FIXME: test for presence of nodes under typedict for every new struct
     opc_binary = mgr.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
     typedict = opc_binary.get_child("1:TypeDictionary")
-    xml = typedict.get_value()
+    xml = typedict.read_value()
     assert b"MyFloat" in xml
     assert b"MyStruct" in xml
 
@@ -135,7 +134,7 @@ def test_structs(modeler, mgr):
 
     opc_binary = mgr.server_mgr.get_node(ua.ObjectIds.OPCBinarySchema_TypeSystem)
     typedict = opc_binary.get_child("1:TypeDictionary")
-    xml = typedict.get_value()
+    xml = typedict.read_value()
 
     assert b"MyFloat" in xml
     assert b"MyStruct" in xml
@@ -155,9 +154,9 @@ def test_structs_2(modeler, mgr):
 
     urns = modeler.get_current_server().get_namespace_array()
     ns_node = mgr.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray)
-    urns = ns_node.get_value()
+    urns = ns_node.read_value()
     urns.append("urn://modeller/testing")
-    ns_node.set_value(urns)
+    ns_node.write_value(urns)
 
     path = "test_save_structs_2.xml"
 
@@ -230,7 +229,7 @@ def test_add_variable_double_list(modeler, mgr, model):
     args = dia.get_args()
     new_node = mgr.add_variable(*args)
     assert new_node in modeler.get_current_server().nodes.objects.get_children()
-    assert isinstance(new_node.get_value(), float)
+    assert isinstance(new_node.read_value(), float)
 
 
 def test_add_variable_string(modeler, mgr, model):
@@ -257,7 +256,7 @@ def test_add_variable_bytes(modeler, mgr, model):
     args = dia.get_args()
     new_node = mgr.add_variable(*args)
     assert new_node in modeler.get_current_server().nodes.objects.get_children()
-    assert val == new_node.get_value()
+    assert val == new_node.read_value()
 
 
 def test_add_variable_float_fail(modeler, mgr, model):
