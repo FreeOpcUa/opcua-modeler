@@ -6,13 +6,10 @@ from collections import OrderedDict
 
 from PyQt5.QtCore import pyqtSignal, QObject, QSettings
 
-from opcua import ua
-from opcua import copy_node
-from opcua import Node
-from opcua.common.instantiate import instantiate
-from opcua.common.ua_utils import data_type_to_variant_type
-from opcua.common.structures import Struct, StructGenerator
-from opcua.common.type_dictionary_buider import DataTypeDictionaryBuilder, get_ua_class
+from asyncua import ua
+from asyncua.sync import copy_node, new_node, instantiate, data_type_to_variant_type
+from asyncua.common.structures import Struct, StructGenerator
+from asyncua.sync import DataTypeDictionaryBuilder
 
 from uawidgets.utils import trycatchslot
 
@@ -132,12 +129,12 @@ class ModelManager(QObject):
             if node == opc_schema:
                 continue  # This is standard namespace structures
             try:
-                ns = node.get_child("0:NamespaceUri").get_value()
+                ns = node.get_child("0:NamespaceUri").read_value()
                 ar = self.server_mgr.get_namespace_array()
                 idx = ar.index(ns)
             except ua.UaError:
                 idx = 1
-            xml = node.get_value()
+            xml = node.read_value()
             if not xml:
                 return
 
@@ -167,7 +164,7 @@ class ModelManager(QObject):
             val = ua.get_default_value(vtype)
             node = struct_node.add_variable(idx, field.name, val, varianttype=vtype, datatype=dtype.nodeid)
             if field.array:
-                node.set_value_rank(ua.ValueRank.OneDimension)
+                node.write_value_rank(ua.ValueRank.OneDimension)
                 node.set_array_dimensions([1])
 
 
@@ -364,7 +361,7 @@ class ModelManager(QObject):
                     dict_builder = self._create_type_dict_node(idx, urn, dict_name)
                     dict_node = self.server_mgr.get_node(dict_builder.dict_id)
                 have_structs = True
-                bname = node.get_browse_name()
+                bname = node.read_browse_name()
                 try:
                     dict_node.get_child(f"{idx}:{bname.Name}")
                     struct = dict_builder.create_data_type(bname.Name, node.nodeid, init=False)
@@ -374,17 +371,17 @@ class ModelManager(QObject):
 
                 childs = node.get_children()
                 for child in childs:
-                    bname = child.get_browse_name()
+                    bname = child.read_browse_name()
                     try:
                         dtype = child.get_data_type()
                     except ua.UaError:
-                        logger.warning("could not get data type for node %s, %s, skipping", child, child.get_browse_name())
+                        logger.warning("could not get data type for node %s, %s, skipping", child, child.read_browse_name())
                         continue
                     array = False
-                    if isinstance(child.get_value(), list) or child.get_array_dimensions() or child.get_value_rank() != ua.ValueRank.Scalar:
+                    if isinstance(child.read_value(), list) or child.get_array_dimensions() or child.read_value_rank() != ua.ValueRank.Scalar:
                         array = True
 
-                    dtype_name = Node(node.server, dtype).get_browse_name()
+                    dtype_name = new_node(node, dtype).read_browse_name()
                     struct.add_field(bname.Name, dtype_name.Name, is_array=array)
                     to_delete.append(child)
 

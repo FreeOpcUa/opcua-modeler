@@ -9,7 +9,7 @@ from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QStyledItemDelegate, QMenu, QAction
 
 
-from opcua import ua
+from asyncua import ua
 
 from uawidgets import resources
 from uawidgets.attrs_widget import AttrsWidget
@@ -105,8 +105,8 @@ class ActionsManager:
                                 self.model_mgr.get_current_server().nodes.data_types):
             return
         path = node.get_path()
-        nodeclass = node.get_node_class()
-        typedefinition = node.get_type_definition()
+        nodeclass = node.read_node_class()
+        typedefinition = node.read_type_definition()
 
         self.ui.actionCopy.setEnabled(True)
         self.ui.actionDelete.setEnabled(True)
@@ -289,7 +289,7 @@ class ModelManagerUI(QObject):
         args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self._model_mgr.server_mgr)
         if ok:
             nodes = self._model_mgr.add_method(*args)
-            print("ADDED", [c.get_browse_name() for c in nodes])
+            print("ADDED", [c.read_browse_name() for c in nodes])
             self._add_modelling_rule(nodes)
 
     @trycatchslot
@@ -352,7 +352,7 @@ class ModelManagerUI(QObject):
 class UaModeler(QMainWindow):
     """
     Main class of modeler. Should be as simple as possible, try to push things to other classes
-    or even better python-opcua
+    or even better python-asyncua
     """
 
     def __init__(self):
@@ -550,7 +550,7 @@ def main():
     logging.getLogger().addHandler(handler)
     logging.getLogger("uamodeler").setLevel(logging.INFO)
     logging.getLogger("uawidgets").setLevel(logging.INFO)
-    #logging.getLogger("opcua").setLevel(logging.INFO)  # to enable logging of ua server
+    #logging.getLogger("asyncua").setLevel(logging.INFO)  # to enable logging of ua server
     modeler.show()
     sys.exit(app.exec_())
 
