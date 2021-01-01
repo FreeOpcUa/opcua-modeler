@@ -46,11 +46,19 @@ class ServerManager(object):
     def nodes(self):
         return self._backend.nodes
 
+    def get_server(self):
+        return self._backend.get_server()
+
     def get_node(self, node):
         return self._backend.get_node(node)
 
     def get_namespace_array(self):
         return self._backend.get_namespace_array()
+
+    def add_default_namespace(self):
+        uris = self._backend.nodes.namespace_array.read_value()
+        uris.append("http//freeopcua/defaults/modeler")
+        self._backend.nodes.namespace_array.write_value(uris)
 
     def start_server(self, endpoint):
         self._action.setEnabled(False)
@@ -81,6 +89,9 @@ class ServerPython(object):
         self.nodes = None
         self.get_node = None
         self.get_namespace_array = None
+
+    def get_server(self):
+        return self._server
 
     def start_server(self, endpoint):
         logger.info("Starting python-opcua server")
@@ -139,6 +150,9 @@ class ServerC(object):
         self.nodes = None
         self.get_node = None
         self.get_namespace_array = None
+
+    def get_server(self):
+        return self._client
 
     def start_server(self, endpoint):
         self._server = UAServer()
