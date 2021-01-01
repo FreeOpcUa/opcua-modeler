@@ -60,7 +60,7 @@ class ModelManager(QObject):
         try:
             added_nodes = copy_node(parent, node)
         except Exception as ex:
-            self.show_error(ex)
+            self.modeler.show_error(ex)
             raise
         self.new_nodes.extend(added_nodes)
         self.modeler.tree_ui.reload_current()
@@ -85,6 +85,7 @@ class ModelManager(QObject):
         endpoint = "opc.tcp://0.0.0.0:48400/freeopcua/uamodeler/"
         logger.info("Starting server on %s", endpoint)
         self.server_mgr.start_server(endpoint)
+        self.server_mgr.add_default_namespace()
 
         self.modeler.tree_ui.set_root_node(self.server_mgr.nodes.root)
         self.modeler.idx_ui.set_node(self.server_mgr.get_node(ua.ObjectIds.Server_NamespaceArray))
@@ -337,7 +338,7 @@ class ModelManager(QObject):
             node_id = dnode.nodeid
         except ua.UaError:
             logger.warning("Dictionary node does not exist, creating it: %s", name)
-        builder = DataTypeDictionaryBuilder(self.server_mgr, idx, urn, name, dict_node_id=node_id)
+        builder = DataTypeDictionaryBuilder(self.server_mgr.get_server(), idx, urn, name, dict_node_id=node_id)
         if builder.dict_id not in self.new_nodes:
             self.new_nodes.append(self.server_mgr.get_node(builder.dict_id))
         return builder
@@ -349,7 +350,11 @@ class ModelManager(QObject):
         struct_node = self.server_mgr.get_node(ua.ObjectIds.Structure)
         dict_name = "TypeDictionary"
         idx = 1
-        urn = self.server_mgr.get_namespace_array()[1]
+        try:
+            urn = self.server_mgr.get_namespace_array()[1]
+        except IndexError:
+            logger.warning("No custom namespace defined, aborting saving structs")
+            return
         to_delete = []
         have_structs = False
         to_add = []
@@ -373,12 +378,12 @@ class ModelManager(QObject):
                 for child in childs:
                     bname = child.read_browse_name()
                     try:
-                        dtype = child.get_data_type()
+                        dtype = child.read_data_type()
                     except ua.UaError:
                         logger.warning("could not get data type for node %s, %s, skipping", child, child.read_browse_name())
                         continue
                     array = False
-                    if isinstance(child.read_value(), list) or child.get_array_dimensions() or child.read_value_rank() != ua.ValueRank.Scalar:
+                    if isinstance(child.read_value(), list) or child.read_array_dimensions() or child.read_value_rank() != ua.ValueRank.Scalar:
                         array = True
 
                     dtype_name = new_node(node, dtype).read_browse_name()

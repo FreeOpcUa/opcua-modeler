@@ -268,7 +268,6 @@ class ModelManagerUI(QObject):
     def _save_as(self):
         path, ok = QFileDialog.getSaveFileName(self.modeler, caption="Save OPC UA XML", filter="XML Files (*.xml *.XML)")
         if ok:
-            print("PATH", path)
             if self._last_model_dir != os.path.dirname(path):
                 self._last_model_dir = os.path.dirname(path)
                 self.settings.setValue("last_model_dir", self._last_model_dir)
@@ -289,7 +288,6 @@ class ModelManagerUI(QObject):
         args, ok = NewUaMethodDialog.getArgs(self.modeler, "Add Method", self._model_mgr.server_mgr)
         if ok:
             nodes = self._model_mgr.add_method(*args)
-            print("ADDED", [c.read_browse_name() for c in nodes])
             self._add_modelling_rule(nodes)
 
     @trycatchslot
