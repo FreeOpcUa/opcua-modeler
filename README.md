@@ -2,6 +2,30 @@ Free OPC UA Modeler
 ===================
 
 
+
+WARNING: This tool is not maintained anymore. The code is fine it could do the job, but I found out it is much safer and easier to maintain to use code instead of created xml using a GUI.
+With the latest version of opcua-asyncua you can easily write custom enums/structs using code like:
+
+
+```
+    snode1, _ = await new_struct(server, idx, "MyStruct", [
+        new_struct_field("MyBool", ua.VariantType.Boolean),
+        new_struct_field("MyUInt32List", ua.VariantType.UInt32, array=True),
+    ])
+    snode2, _ = await new_struct(server, idx, "MyOptionalStruct", [
+        new_struct_field("MyBool", ua.VariantType.Boolean),
+        new_struct_field("MyUInt32List", ua.VariantType.UInt32, array=True),
+        new_struct_field("MyInt64", ua.VariantType.Int64, optional=True),
+    ])
+    enode = await new_enum(server, idx, "MyEnum", [
+        "titi",
+        "toto",
+        "tutu",
+    ])
+
+```
+
+
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-modeler/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/FreeOpcUa/opcua-modeler/?branch=master)
 [![Build Status](https://travis-ci.org/FreeOpcUa/opcua-modeler.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-modeler)
 [![Build Status](https://travis-ci.org/FreeOpcUa/opcua-widgets.svg?branch=master)](https://travis-ci.org/FreeOpcUa/opcua-widgets)
