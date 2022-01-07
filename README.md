@@ -3,7 +3,7 @@ Free OPC UA Modeler
 
 
 
-WARNING: This tool is not maintained anymore. The code is fine it could do the job, but I found out it is much safer and easier to maintain to use code instead of created xml using a GUI.
+<b>WARNING: This tool is not maintained anymore.</b> The code is fine it could do the job, but I found out it is much safer and easier to maintain to use code instead of created xml using a GUI.
 With the latest version of opcua-asyncua you can easily write custom enums/structs using code like:
 
 
