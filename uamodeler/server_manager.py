@@ -73,8 +73,8 @@ class ServerManager(object):
     def import_xml(self, path):
         return self._backend.import_xml(path)
 
-    def export_xml(self, nodes, uris, path):
-        return self._backend.export_xml(nodes, uris, path)
+    def export_xml(self, nodes, path):
+        return self._backend.export_xml(nodes, path)
 
     def load_type_definitions(self):
         return self._backend.load_type_definitions()
@@ -120,9 +120,9 @@ class ServerPython(object):
     def import_xml(self, path):
         return self._server.import_xml(path)
 
-    def export_xml(self, nodes, uris, path):
+    def export_xml(self, nodes, path):
         exp = XmlExporter(self._server)
-        exp.build_etree(nodes, uris=uris)
+        exp.build_etree(nodes)
         exp.write_xml(path)
 
 

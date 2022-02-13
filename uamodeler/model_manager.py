@@ -225,9 +225,8 @@ class ModelManager(QObject):
         logger.info("Saving nodes to %s", path)
         logger.info("Exporting  %s nodes: %s", len(self.new_nodes), self.new_nodes)
         logger.info("and namespaces: %s ", self.server_mgr.get_namespace_array()[1:])
-        uris = self.server_mgr.get_namespace_array()[1:]
         self.new_nodes = list(OrderedDict.fromkeys(self.new_nodes))  # remove any potential duplicate
-        self.server_mgr.export_xml(self.new_nodes, uris, path)
+        self.server_mgr.export_xml(self.new_nodes, path)
         self.modified = False
         logger.info("%s saved", path)
         self._show_structs()  #_save_structs has delete our design nodes for structure, we need to recreate them

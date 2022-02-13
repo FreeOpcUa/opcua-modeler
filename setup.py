@@ -8,7 +8,7 @@ setup(name="opcua-modeler",
       url='https://github.com/FreeOpcUa/opcua-modeler',
       packages=["uamodeler"],
       license="GNU General Public License",
-      install_requires=["python-opcua>=0.98.13", "opcua-widgets < 0.6.0"],
+      install_requires=["asyncua", "opcua-widgets", "pyqt5"],
       entry_points={'console_scripts':
                     ['opcua-modeler = uamodeler.uamodeler:main']
                     }
