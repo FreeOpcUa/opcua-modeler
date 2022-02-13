@@ -186,8 +186,8 @@ class ServerC(object):
     def import_xml(self, path):
         return self._client.import_xml(path)
 
-    def export_xml(self, nodes, uris, path):
+    def export_xml(self, nodes, path):
         exp = XmlExporter(self._client)
-        exp.build_etree(nodes, uris=uris)
+        exp.build_etree(nodes)
         exp.write_xml(path)
 
